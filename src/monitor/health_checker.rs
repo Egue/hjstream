@@ -114,11 +114,11 @@ impl HealthChecker {
     
     /// Diagnosticar problemas específicos de un canal
     async fn diagnose_channel(&self, channel_id: &str, stats: &crate::models::stats::ChannelStats) {
-        let mut issues = Vec::new();
+        let mut issues: Vec<String> = Vec::new();
         
         // Verificar FPS bajo
         if stats.current_fps < 10.0 && stats.uptime_seconds > 30 {
-            issues.push("FPS extremadamente bajo");
+            issues.push("FPS extremadamente bajo".to_string());
             
             let alert = MonitoringAlert::new(
                 channel_id.to_string(),
@@ -132,7 +132,7 @@ impl HealthChecker {
         
         // Verificar frames descartados
         if stats.dropped_frames_percentage() > 5.0 {
-            issues.push("Alto porcentaje de frames descartados");
+            issues.push("Alto porcentaje de frames descartados".to_string());
             
             let alert = MonitoringAlert::new(
                 channel_id.to_string(),
@@ -146,7 +146,7 @@ impl HealthChecker {
         
         // Verificar velocidad de procesamiento
         if stats.speed > 0.0 && stats.speed < 0.9 {
-            issues.push("Velocidad de procesamiento baja");
+            issues.push("Velocidad de procesamiento baja".to_string());
             
             let alert = MonitoringAlert::new(
                 channel_id.to_string(),
@@ -160,7 +160,7 @@ impl HealthChecker {
         
         // Verificar error en status
         if let ChannelStatus::Error(ref error_msg) = stats.status {
-            issues.push(&format!("Error: {}", error_msg));
+            issues.push(format!("Error: {}", error_msg));
         }
         
         if !issues.is_empty() {

@@ -13,6 +13,12 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Soporte para más codecs (HEVC, AV1)
 - Clustering automático
 
+## [0.2.0] - 2026-01-28
+-Modulo codecs
+-corrección de importacion
+-validacion de test
+-check del project ok
+
 ## [0.1.0] - 2026-01-28
 
 ### Agregado

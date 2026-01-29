@@ -1,10 +1,10 @@
 use crate::config::loader::{ClientConfig, ChannelConfig};
 use crate::models::stats::ChannelStats;
 use crate::models::error::TranscoderError;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
-use tracing::{info, warn, error};
+use tracing::{info, warn};
 
 /// Cliente HTTP para comunicación con el backend Quarkus
 #[derive(Clone)]

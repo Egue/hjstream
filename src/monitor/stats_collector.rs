@@ -1,6 +1,6 @@
 use crate::core::manager::TranscoderManager;
 use crate::api::client::ApiClient;
-use crate::models::stats::{ChannelStats, StatsHistory};
+use crate::models::stats::{ChannelStats, StatsHistory, ChannelStatus};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;

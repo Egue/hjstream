@@ -14,7 +14,7 @@ if [ "$1" = "dev" ]; then
     echo "Compilando en modo desarrollo..."
     cargo build
     echo "✓ Build de desarrollo completado"
-    echo "Ejecutable: target/debug/catv-transcoder"
+    echo "Ejecutable: target/debug/hjstream"
     
 # Build de producción
 elif [ "$1" = "release" ] || [ "$1" = "prod" ]; then
@@ -24,14 +24,14 @@ elif [ "$1" = "release" ] || [ "$1" = "prod" ]; then
     # Opcional: strip para reducir tamaño
     if command -v strip &> /dev/null; then
         echo "Reduciendo tamaño del binario..."
-        strip target/release/catv-transcoder
+        strip target/release/hjstream
     fi
     
     echo "✓ Build de producción completado"
-    echo "Ejecutable: target/release/catv-transcoder"
+    echo "Ejecutable: target/release/hjstream"
     
     # Mostrar tamaño
-    ls -lh target/release/catv-transcoder
+    ls -lh target/release/hjstream
     
 # Build con características específicas
 elif [ "$1" = "full" ]; then

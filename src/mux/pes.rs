@@ -25,7 +25,7 @@ impl PesPacket {
         
         // Parsear flags y PTS/DTS (simplificado)
         let mut pts = None;
-        let mut dts = None;
+        let dts = None;
         let mut data_offset = 9;
         
         if data.len() > 7 {

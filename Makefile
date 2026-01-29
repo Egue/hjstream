@@ -18,13 +18,13 @@ build:
 
 release:
 	cargo build --release
-	strip target/release/catv-transcoder
+	strip target/release/hjstream
 
 dev:
 	cargo run
 
 run:
-	./target/release/catv-transcoder
+	./target/release/hjstream
 
 test:
 	cargo test --all-features
@@ -45,23 +45,50 @@ clean:
 install:
 	sudo ./scripts/install-deps.sh
 
-# Docker
-docker-build:
-	docker build -t catv-transcoder:latest .
-
-docker-run:
-	docker run -d \
-		--name catv-transcoder \
-		-v $(PWD)/config:/app/config \
-		-v $(PWD)/logs:/app/logs \
-		--network host \
-		catv-transcoder:latest
 
 # Producción
 deploy: release
 	@echo "Copiando binario a /usr/local/bin..."
-	sudo cp target/release/catv-transcoder /usr/local/bin/
+	sudo cp target/release/hjstream /usr/local/bin/
 	@echo "Copiando servicio systemd..."
-	sudo cp deploy/catv-transcoder.service /etc/systemd/system/
+	sudo cp deploy/hjstream.service /etc/systemd/system/
 	sudo systemctl daemon-reload
 	@echo "Deploy completado"
+
+
+# Docker targets
+docker-build:
+	./scripts/docker-build.sh $(VERSION)
+
+docker-push:
+	./scripts/docker-push.sh $(VERSION)
+
+docker-run:
+	docker-compose up -d
+
+docker-stop:
+	docker-compose down
+
+docker-logs:
+	docker-compose logs -f transcoder
+
+docker-shell:
+	docker exec -it hjstream /bin/bash
+
+docker-clean:
+	docker-compose down -v
+	docker rmi hjstream:latest
+
+# Docker development
+docker-dev:
+	docker-compose -f docker-compose.dev.yml up
+
+docker-dev-build:
+	docker-compose -f docker-compose.dev.yml build
+
+# Docker production
+docker-prod:
+	docker-compose -f docker-compose.prod.yml up -d
+
+docker-prod-stop:
+	docker-compose -f docker-compose.prod.yml down

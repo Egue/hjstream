@@ -59,7 +59,7 @@ stop_by_pid() {
 
 stop_by_name() {
     echo "Buscando procesos por nombre..."
-    PIDS=$(pgrep -f "catv-transcoder" || true)
+    PIDS=$(pgrep -f "hjstream" || true)
     
     if [ -z "$PIDS" ]; then
         echo -e "${YELLOW}No se encontraron procesos corriendo${NC}"
@@ -76,13 +76,13 @@ stop_by_name() {
     sleep 2
     
     # Verificar si terminaron
-    REMAINING=$(pgrep -f "catv-transcoder" || true)
+    REMAINING=$(pgrep -f "hjstream" || true)
     if [ -z "$REMAINING" ]; then
         echo -e "${GREEN}✓ Todos los procesos detenidos${NC}"
         return 0
     else
         echo -e "${YELLOW}Forzando terminación de procesos restantes...${NC}"
-        killall -9 catv-transcoder 2>/dev/null || true
+        killall -9 hjstream 2>/dev/null || true
         echo -e "${GREEN}✓ Procesos terminados${NC}"
     fi
 }
@@ -98,7 +98,7 @@ case $MODE in
     
     systemd)
         echo "Deteniendo via systemd..."
-        sudo systemctl stop catv-transcoder
+        sudo systemctl stop hjstream
         echo -e "${GREEN}✓ Servicio detenido${NC}"
         ;;
     

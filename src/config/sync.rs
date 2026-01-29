@@ -45,7 +45,7 @@ impl ConfigSyncService {
         let local_configs = self.loader.load_all_channels()?;
         
         // 3. Comparar y actualizar
-        for backend_config in backend_configs {
+        for backend_config in &backend_configs {
             let local_config = local_configs.iter()
                 .find(|c| c.id == backend_config.id);
             

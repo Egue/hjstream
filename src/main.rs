@@ -6,13 +6,22 @@ use tokio::signal;
 
 mod api;
 mod codec;
-mod config;
+mod config {
+    pub mod loader;
+    pub mod sync;
+}
 mod core;
 mod models;
 mod monitor;
 mod mux;
 mod network;
-mod utils;
+mod utils {
+    pub mod ffmpeg;
+    pub mod pid_manager;
+    pub mod bitrate_calc;
+    pub mod time;
+    pub mod hash;
+}
 
 use config::loader::ConfigLoader;
 use config::sync::ConfigSyncService;

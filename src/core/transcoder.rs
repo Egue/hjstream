@@ -10,11 +10,20 @@ use tokio::sync::RwLock;
 use tracing::{info, warn, error, debug};
 
 /// Motor de transcodificación que ejecuta FFmpeg
-#[derive(Clone)]
 pub struct Transcoder {
     config: ChannelConfig,
     strategy: TranscodeStrategy,
     process: Arc<RwLock<Option<Child>>>,
+}
+
+impl Clone for Transcoder {
+    fn clone(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+            strategy: self.strategy.clone(),
+            process: Arc::clone(&self.process),
+        }
+    }
 }
 
 impl Transcoder {

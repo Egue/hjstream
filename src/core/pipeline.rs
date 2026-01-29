@@ -1,6 +1,6 @@
 use crate::models::error::TranscoderError;
 use tokio::sync::mpsc;
-use tracing::{info, error};
+use tracing::info;
 
 /// Representa un frame de video en raw
 pub struct VideoFrame {

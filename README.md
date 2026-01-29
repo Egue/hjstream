@@ -337,13 +337,13 @@ ENABLE_AUTO_START=true
 ### Ejecución Manual
 ```bash
 # Con configuración por defecto
-./target/release/catv-transcoder
+./target/release/hjstream
 
 # Con variables de entorno
-RUST_LOG=debug ./target/release/catv-transcoder
+RUST_LOG=debug ./target/release/hjstream
 
 # Con archivo de log específico
-LOG_FILE=/var/log/transcoder.log ./target/release/catv-transcoder
+LOG_FILE=/var/log/transcoder.log ./target/release/hjstream
 ```
 
 ## 🌐 API REST
@@ -498,7 +498,7 @@ curl http://localhost:9090/metrics
 **prometheus.yml:**
 ```yaml
 scrape_configs:
-  - job_name: 'catv-transcoder'
+  - job_name: 'hjstream'
     static_configs:
       - targets: ['localhost:9090']
         labels:
@@ -515,42 +515,42 @@ Importar dashboard desde `deploy/grafana-dashboard.json`
 
 Copiar archivo de servicio:
 ```bash
-sudo cp deploy/catv-transcoder.service /etc/systemd/system/
+sudo cp deploy/hjstream.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable catv-transcoder
-sudo systemctl start catv-transcoder
+sudo systemctl enable hjstream
+sudo systemctl start hjstream
 ```
 
 **Comandos:**
 ```bash
 # Iniciar
-sudo systemctl start catv-transcoder
+sudo systemctl start hjstream
 
 # Detener
-sudo systemctl stop catv-transcoder
+sudo systemctl stop hjstream
 
 # Reiniciar
-sudo systemctl restart catv-transcoder
+sudo systemctl restart hjstream
 
 # Estado
-sudo systemctl status catv-transcoder
+sudo systemctl status hjstream
 
 # Ver logs
-sudo journalctl -u catv-transcoder -f
+sudo journalctl -u hjstream -f
 ```
 
 ### Docker
 ```bash
 # Build
-docker build -t catv-transcoder:latest .
+docker build -t hjstream:latest .
 
 # Run
 docker run -d \
-  --name catv-transcoder \
+  --name hjstream \
   --network host \
   -v $(pwd)/config:/app/config \
   -v $(pwd)/logs:/app/logs \
-  catv-transcoder:latest
+  hjstream:latest
 ```
 
 ### Docker Compose

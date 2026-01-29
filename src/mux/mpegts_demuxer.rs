@@ -1,5 +1,5 @@
 use super::packet::{TsPacket, TS_PACKET_SIZE, SYNC_BYTE};
-use bytes::BytesMut;
+use bytes::{BytesMut, Buf};
 use std::collections::HashMap;
 use tracing::{debug, warn};
 

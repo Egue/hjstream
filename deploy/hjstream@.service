@@ -1,0 +1,45 @@
+# Servicio template para múltiples instancias
+# Uso: systemctl start hjstream@01.service
+
+[Unit]
+Description=CATV Transcoder Client - Instance %i
+Documentation=https://github.com/Eguee/hjstream
+After=network-online.target
+Wants=network-online.target
+PartOf=hjstream.target
+
+[Service]
+Type=simple
+User=transcoder
+Group=transcoder
+
+WorkingDirectory=/opt/hjstream-%i
+
+ExecStart=/opt/hjstream/bin/hjstream
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=always
+RestartSec=10s
+
+TimeoutStartSec=60s
+TimeoutStopSec=30s
+
+# Recursos por instancia
+CPUQuota=200%
+MemoryMax=4G
+MemoryHigh=3G
+
+LimitNOFILE=65536
+
+Environment="RUST_LOG=info"
+Environment="INSTANCE_ID=%i"
+EnvironmentFile=/opt/hjstream-%i/.env
+
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hjstream-%i
+
+[Install]
+WantedBy=hjstream.target

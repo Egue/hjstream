@@ -2,7 +2,7 @@ use crate::models::error::TranscoderError;
 use serde::{Deserialize, Serialize};
 use std::process::Stdio;
 use tokio::process::Command;
-use tracing::{info, warn, error};
+use tracing::info;
 
 /// Información detectada de un stream
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,8 +107,8 @@ impl StreamAnalyzer {
         // Construir StreamInfo
         let info = StreamInfo {
             container_format: probe_data.format.format_name.clone(),
-            duration_seconds: probe_data.format.duration.and_then(|d| d.parse::<f64>().ok()),
-            bitrate_kbps: probe_data.format.bit_rate
+            duration_seconds: probe_data.format.duration.as_ref().and_then(|d| d.parse::<f64>().ok()),
+            bitrate_kbps: probe_data.format.bit_rate.as_ref()
                 .and_then(|b| b.parse::<u32>().ok())
                 .unwrap_or(0) / 1000,
             
@@ -120,7 +120,7 @@ impl StreamAnalyzer {
             width: video_stream.width.unwrap_or(0),
             height: video_stream.height.unwrap_or(0),
             fps,
-            video_bitrate_kbps: video_stream.bit_rate
+            video_bitrate_kbps: video_stream.bit_rate.as_ref()
                 .and_then(|b| b.parse::<u32>().ok())
                 .unwrap_or(0) / 1000,
             pixel_format: video_stream.pix_fmt.clone().unwrap_or_default(),
@@ -128,10 +128,10 @@ impl StreamAnalyzer {
             // Audio
             audio_codec: audio_stream.codec_name.clone(),
             audio_codec_name: audio_stream.codec_long_name.clone().unwrap_or_default(),
-            audio_bitrate_kbps: audio_stream.bit_rate
+            audio_bitrate_kbps: audio_stream.bit_rate.as_ref()
                 .and_then(|b| b.parse::<u32>().ok())
                 .unwrap_or(0) / 1000,
-            sample_rate: audio_stream.sample_rate
+            sample_rate: audio_stream.sample_rate.as_ref()
                 .and_then(|s| s.parse::<u32>().ok())
                 .unwrap_or(0),
             channels: audio_stream.channels.unwrap_or(0) as u8,

@@ -1,7 +1,7 @@
 [package]
 name = "catv-transcoder-client"
 version = "0.1.0"
-edition = "2026"
+edition = "2021"
 authors = ["HjSolutions <eguee23@icloud.com>"]
 description = "Cliente de transcodificación distribuido para sistemas CATV"
 license = "MIT"

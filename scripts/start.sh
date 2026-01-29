@@ -5,7 +5,7 @@ set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BIN_PATH="$PROJECT_DIR/target/release/catv-transcoder"
+BIN_PATH="$PROJECT_DIR/target/release/hjstream"
 
 # Colores para output
 RED='\033[0;31m'
@@ -104,8 +104,8 @@ case $MODE in
     
     systemd)
         echo "Iniciando via systemd..."
-        sudo systemctl start catv-transcoder
-        sudo systemctl status catv-transcoder
+        sudo systemctl start hjstream
+        sudo systemctl status hjstream
         ;;
     
     *)

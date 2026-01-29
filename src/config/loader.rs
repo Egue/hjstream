@@ -1,3 +1,4 @@
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -18,6 +19,23 @@ pub struct ClientConfig {
     pub config_sync_interval_seconds: u64,
 }
 
+impl Default for ClientConfig {
+    fn default() -> Self {
+        Self {
+            client_id: uuid::Uuid::new_v4().to_string(),
+            name: "Default Client".to_string(),
+            location: "Unknown".to_string(),
+            backend: BackendConfig::default(),
+            server: ServerConfig::default(),
+            logging: LoggingConfig::default(),
+            performance: PerformanceConfig::default(),
+            auto_start_channels: false,
+            config_backup_enabled: true,
+            config_sync_interval_seconds: 60,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BackendConfig {
     pub url: String,
@@ -25,6 +43,18 @@ pub struct BackendConfig {
     pub heartbeat_interval_seconds: u64,
     pub reconnect_attempts: u32,
     pub reconnect_delay_seconds: u64,
+}
+
+impl Default for BackendConfig {
+    fn default() -> Self {
+        Self {
+            url: "http://localhost:8080".to_string(),
+            api_key: "default-api-key".to_string(),
+            heartbeat_interval_seconds: 30,
+            reconnect_attempts: 5,
+            reconnect_delay_seconds: 10,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,6 +65,17 @@ pub struct ServerConfig {
     pub metrics_port: u16,
 }
 
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            host: "0.0.0.0".to_string(),
+            port: 3000,
+            enable_metrics: true,
+            metrics_port: 9090,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LoggingConfig {
     pub level: String,
@@ -43,11 +84,32 @@ pub struct LoggingConfig {
     pub max_files: u32,
 }
 
+impl Default for LoggingConfig {
+    fn default() -> Self {
+        Self {
+            level: "info".to_string(),
+            file: "logs/hjstream.log".to_string(),
+            max_size_mb: 100,
+            max_files: 10,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceConfig {
     pub max_channels: u32,
     pub worker_threads: u32,
     pub buffer_size_mb: u64,
+}
+
+impl Default for PerformanceConfig {
+    fn default() -> Self {
+        Self {
+            max_channels: 16,
+            worker_threads: 4,
+            buffer_size_mb: 256,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -152,6 +214,15 @@ pub struct FailoverConfig {
 pub struct ConfigLoader {
     config_dir: PathBuf,
     backup_dir: PathBuf,
+}
+
+impl Clone for ConfigLoader {
+    fn clone(&self) -> Self {
+        Self {
+            config_dir: self.config_dir.clone(),
+            backup_dir: self.backup_dir.clone(),
+        }
+    }
 }
 
 impl ConfigLoader {

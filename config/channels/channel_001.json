@@ -1,0 +1,75 @@
+{
+  "id": "channel_001",
+  "name": "Canal 1 HD",
+  "enabled": true,
+  "mode": "srt_transcoder",
+  "input": {
+    "type": "srt",
+    "url": "srt://10.0.1.100:9000?mode=listener",
+    "latency_ms": 200,
+    "max_bandwidth_mbps": 20,
+    "passphrase": "optional-encryption-key"
+  },
+  "output": {
+    "type": "udp",
+    "url": "udp://239.0.0.1:5000",
+    "local_interface": "192.168.1.10",
+    "ttl": 32,
+    "packet_size": 1316
+  },
+  "video": {
+    "codec": "h264",
+    "profile": "main",
+    "level": "4.0",
+    "bitrate_kbps": 4000,
+    "max_bitrate_kbps": 4500,
+    "buffer_size_kb": 8000,
+    "framerate": 30,
+    "gop_size": 60,
+    "preset": "medium",
+    "tune": "zerolatency",
+    "rate_control": "cbr",
+    "hardware_acceleration": {
+      "enabled": false,
+      "type": "nvenc"
+    }
+  },
+  "audio": {
+    "codec": "aac",
+    "bitrate_kbps": 128,
+    "sample_rate": 48000,
+    "channels": 2,
+    "profile": "aac_low"
+  },
+  "mpegts": {
+    "pmt_pid": 4096,
+    "video_pid": 256,
+    "audio_pid": 257,
+    "pcr_pid": 256,
+    "service_id": 1,
+    "service_name": "Canal 1 HD",
+    "provider_name": "CATV Provider"
+  },
+  "analysis": {
+    "auto_detect": true,
+    "force_transcode": false,
+    "passthrough_if_compatible": true
+  },
+  "monitoring": {
+    "report_interval_seconds": 10,
+    "alert_on_error": true,
+    "alert_on_bitrate_deviation_percent": 15
+  },
+  "failover": {
+    "auto_restart": true,
+    "max_restart_attempts": 3,
+    "restart_delay_seconds": 5,
+    "backup_input_url": null
+  },
+  "metadata": {
+    "modulator_id": "MOD-001",
+    "frequency_mhz": 522,
+    "qam_mode": "256QAM",
+    "notes": "Canal principal de noticias"
+  }
+}

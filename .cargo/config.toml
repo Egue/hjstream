@@ -1,0 +1,14 @@
+[build]
+# Número de trabajos en paralelo (ajustar según CPU)
+jobs = 4
+
+[target.x86_64-unknown-linux-gnu]
+# Optimizaciones específicas para producción
+rustflags = ["-C", "target-cpu=native"]
+
+[alias]
+# Aliases útiles
+dev = "run --features metrics"
+prod = "build --release"
+check-all = "check --all-features"
+test-all = "test --all-features"

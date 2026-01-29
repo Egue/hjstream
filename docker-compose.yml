@@ -1,0 +1,135 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Transcoder Client
+  # ============================================================================
+  transcoder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - RUST_VERSION=1.75
+    image: hjstream:latest
+    container_name: hjstream
+    hostname: transcoder-01
+    restart: unless-stopped
+    
+    # Network mode host para mejor rendimiento de red
+    # Comentar si prefieres usar bridge y mapear puertos
+    network_mode: host
+    
+    # Alternativa con bridge network:
+    # ports:
+    #   - "8080:8080"    # API REST
+    #   - "9090:9090"    # Métricas Prometheus
+    
+    volumes:
+      # Configuración persistente
+      - ./config:/app/config
+      - ./logs:/app/logs
+      
+      # Variables de entorno
+      - ./.env:/app/.env:ro
+      
+      # Timezone
+      - /etc/localtime:/etc/localtime:ro
+    
+    environment:
+      - RUST_LOG=info
+      - CLIENT_ID=transcoder-docker-01
+      - CLIENT_NAME=Transcoder Docker 01
+      - BACKEND_URL=http://backend:8080
+      
+    # Recursos
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '2.0'
+          memory: 2G
+    
+    # Capabilities para networking
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Labels para Prometheus autodiscovery
+    labels:
+      - "prometheus.scrape=true"
+      - "prometheus.port=9090"
+      - "prometheus.path=/metrics"
+
+  # ============================================================================
+  # Prometheus (Opcional - para monitoreo)
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    
+    ports:
+      - "9091:9090"
+    
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    
+    depends_on:
+      - transcoder
+
+  # ============================================================================
+  # Grafana (Opcional - para visualización)
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    
+    ports:
+      - "3000:3000"
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./deploy/grafana-dashboard.json:/etc/grafana/provisioning/dashboards/catv.json:ro
+      - ./deploy/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+    
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+networks:
+  default:
+    name: catv-network
+    driver: bridge

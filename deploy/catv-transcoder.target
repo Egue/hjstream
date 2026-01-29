@@ -1,0 +1,8 @@
+# Target para gestionar múltiples instancias
+
+[Unit]
+Description=CATV Transcoder Cluster
+Documentation=https://github.com/Eguee/hjstream
+
+[Install]
+WantedBy=multi-user.target

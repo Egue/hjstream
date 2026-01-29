@@ -136,8 +136,8 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 
 # 3. Clonar repositorio
-git clone https://github.com/tu-usuario/catv-transcoding-system.git
-cd catv-transcoding-system/client-rust
+git clone https://github.com/Eguee/hjstream.git
+cd hjstream
 
 # 4. Configurar
 cp .env.example .env

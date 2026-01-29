@@ -13,7 +13,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Soporte para más codecs (HEVC, AV1)
 - Clustering automático
 
-## [0.1.0] - 2024-01-28
+## [0.1.0] - 2026-01-28
 
 ### Agregado
 - Transcodificación en tiempo real con FFmpeg
@@ -39,7 +39,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Validación de entrada
 - Rate limiting en alertas
 
-## [0.0.1] - 2024-01-01
+## [0.0.1] - 2026-01-28
 
 ### Agregado
 - Proyecto inicial

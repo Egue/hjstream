@@ -116,25 +116,32 @@ impl Default for PerformanceConfig {
 pub struct ChannelConfig {
     pub id: String,
     pub name: String,
+    #[serde(default = "default_true")]
     pub enabled: bool,
+    #[serde(default = "default_passthrough")]
     pub mode: String,
     pub input: InputConfig,
     pub output: OutputConfig,
     
-    // Transcoding es opcional
     #[serde(default)]
     pub transcoding: Option<TranscodingConfig>,
     
-    // Monitoreo básico es opcional
     #[serde(default)]
     pub monitoring: Option<MonitoringConfig>,
     
-    // Failover es opcional
     #[serde(default)]
     pub failover: Option<FailoverConfig>,
     
     #[serde(default)]
     pub metadata: serde_json::Value,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_passthrough() -> String {
+    "passthrough".to_string()
 }
 
 /// Configuración de transcodificación (opcional)

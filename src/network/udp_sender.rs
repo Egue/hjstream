@@ -29,7 +29,7 @@ impl UdpSender {
             destination,
             local_interface: None,
             ttl: 32,
-            packet_size: 1316, // 7 paquetes MPEG-TS (188 * 7)
+            packet_size: 4620, // 25 paquetes MPEG-TS (188 * 25) - mejor throughput
             packets_sent: 0,
             bytes_sent: 0,
         })
@@ -59,8 +59,20 @@ impl UdpSender {
     /// Configurar interfaz local
     pub fn with_local_interface(mut self, interface: String) -> Result<Self, TranscoderError> {
         // En Linux, usar SO_BINDTODEVICE
-        // En producción, necesitarías usar socket2 crate para esto
         info!("Configurando interfaz local: {}", interface);
+        
+        // Intentar bind a interfaz por nombre (ens19, eth0, etc)
+        // O por IP si es una dirección
+        if let Ok(addr) = interface.parse::<std::net::IpAddr>() {
+            // Es una IP, bind a esa IP
+            let bind_addr = format!("{}:0", addr);
+            info!("Intentando bind a IP: {}", bind_addr);
+            // Este bind se hará en creación del socket
+        } else {
+            // Es un nombre de interfaz (ens19, eth0), usar SO_BINDTODEVICE
+            info!("Configurando SO_BINDTODEVICE a: {}", interface);
+        }
+        
         self.local_interface = Some(interface);
         Ok(self)
     }

@@ -1,0 +1,279 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HJStream Channel Configuration Schema",
+  "description": "Schema for HJStream channel configurations with optional transcoding",
+  "type": "object",
+  "required": ["id", "name", "enabled", "mode", "input", "output"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique channel identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Channel display name"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Channel enabled status"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["passthrough", "srt_transcoder", "udp_transcoder"],
+      "description": "Channel operation mode"
+    },
+    "input": {
+      "type": "object",
+      "required": ["type", "url"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["srt", "udp", "tcp", "rtp"],
+          "description": "Input protocol type"
+        },
+        "url": {
+          "type": "string",
+          "description": "Input connection URL"
+        },
+        "latency_ms": {
+          "type": "integer",
+          "description": "Latency in milliseconds (SRT)"
+        },
+        "max_bandwidth_mbps": {
+          "type": "integer",
+          "description": "Maximum bandwidth in Mbps (SRT)"
+        },
+        "passphrase": {
+          "type": "string",
+          "description": "Encryption passphrase (SRT)"
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["type", "url"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["srt", "udp", "tcp", "rtp"],
+          "description": "Output protocol type"
+        },
+        "url": {
+          "type": "string",
+          "description": "Output destination URL"
+        },
+        "local_interface": {
+          "type": "string",
+          "description": "Local interface IP for binding"
+        },
+        "ttl": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Time to live (UDP multicast)"
+        },
+        "packet_size": {
+          "type": "integer",
+          "description": "Packet size in bytes"
+        }
+      }
+    },
+    "transcoding": {
+      "type": "object",
+      "description": "Optional transcoding configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable transcoding"
+        },
+        "video": {
+          "type": "object",
+          "properties": {
+            "codec": {
+              "type": "string",
+              "enum": ["h264", "h265", "vp9"],
+              "description": "Video codec"
+            },
+            "profile": {
+              "type": "string",
+              "description": "Video profile (baseline, main, high)"
+            },
+            "level": {
+              "type": "string",
+              "description": "Video level (e.g., 4.0, 5.1)"
+            },
+            "bitrate_kbps": {
+              "type": "integer",
+              "description": "Target bitrate in kbps"
+            },
+            "max_bitrate_kbps": {
+              "type": "integer",
+              "description": "Maximum bitrate in kbps"
+            },
+            "buffer_size_kb": {
+              "type": "integer",
+              "description": "Buffer size in KB"
+            },
+            "framerate": {
+              "type": "integer",
+              "description": "Frames per second"
+            },
+            "gop_size": {
+              "type": "integer",
+              "description": "Group of pictures size"
+            },
+            "preset": {
+              "type": "string",
+              "enum": ["ultrafast", "superfast", "veryfast", "faster", "fast", "medium", "slow", "slower", "veryslow"],
+              "description": "Encoding preset"
+            },
+            "tune": {
+              "type": "string",
+              "description": "Encoding tune (zerolatency, film, etc.)"
+            },
+            "rate_control": {
+              "type": "string",
+              "enum": ["cbr", "vbr", "qp"],
+              "description": "Rate control method"
+            },
+            "hardware_acceleration": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["nvenc", "qsv", "videotoolbox"],
+                  "description": "Hardware acceleration type"
+                }
+              }
+            }
+          }
+        },
+        "audio": {
+          "type": "object",
+          "properties": {
+            "codec": {
+              "type": "string",
+              "enum": ["aac", "mp3", "opus", "flac"],
+              "description": "Audio codec"
+            },
+            "bitrate_kbps": {
+              "type": "integer",
+              "description": "Audio bitrate in kbps"
+            },
+            "sample_rate": {
+              "type": "integer",
+              "enum": [8000, 16000, 22050, 44100, 48000, 96000],
+              "description": "Sample rate in Hz"
+            },
+            "channels": {
+              "type": "integer",
+              "enum": [1, 2, 6],
+              "description": "Number of audio channels"
+            },
+            "profile": {
+              "type": "string",
+              "description": "Audio profile (aac_low, etc.)"
+            }
+          }
+        },
+        "mpegts": {
+          "type": "object",
+          "properties": {
+            "pmt_pid": {
+              "type": "integer",
+              "description": "Program Map Table PID"
+            },
+            "video_pid": {
+              "type": "integer",
+              "description": "Video stream PID"
+            },
+            "audio_pid": {
+              "type": "integer",
+              "description": "Audio stream PID"
+            },
+            "pcr_pid": {
+              "type": "integer",
+              "description": "Program Clock Reference PID"
+            },
+            "service_id": {
+              "type": "integer",
+              "description": "Service ID"
+            },
+            "service_name": {
+              "type": "string",
+              "description": "Service name"
+            },
+            "provider_name": {
+              "type": "string",
+              "description": "Provider name"
+            }
+          }
+        },
+        "analysis": {
+          "type": "object",
+          "properties": {
+            "auto_detect": {
+              "type": "boolean",
+              "description": "Auto-detect stream properties"
+            },
+            "force_transcode": {
+              "type": "boolean",
+              "description": "Force transcoding"
+            },
+            "passthrough_if_compatible": {
+              "type": "boolean",
+              "description": "Pass-through if compatible"
+            }
+          }
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "Optional monitoring configuration",
+      "properties": {
+        "report_interval_seconds": {
+          "type": "integer",
+          "description": "Report interval in seconds"
+        },
+        "alert_on_error": {
+          "type": "boolean",
+          "description": "Alert on error"
+        },
+        "alert_on_bitrate_deviation_percent": {
+          "type": "integer",
+          "description": "Bitrate deviation threshold percentage"
+        }
+      }
+    },
+    "failover": {
+      "type": "object",
+      "description": "Optional failover configuration",
+      "properties": {
+        "auto_restart": {
+          "type": "boolean",
+          "description": "Auto-restart on failure"
+        },
+        "max_restart_attempts": {
+          "type": "integer",
+          "description": "Maximum restart attempts"
+        },
+        "restart_delay_seconds": {
+          "type": "integer",
+          "description": "Delay between restarts in seconds"
+        },
+        "backup_input_url": {
+          "type": ["string", "null"],
+          "description": "Backup input URL"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata"
+    }
+  }
+}

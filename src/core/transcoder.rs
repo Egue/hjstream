@@ -1,51 +1,71 @@
 use crate::config::loader::ChannelConfig;
-use crate::core::strategy::TranscodeStrategy;
 use crate::models::stats::ChannelStats;
 use crate::models::error::TranscoderError;
 use std::process::Stdio;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::RwLock;
-use tracing::{info, warn, error, debug};
+use tokio::time::sleep;
+use tracing::{warn, error, debug};
 
 /// Motor de transcodificación que ejecuta FFmpeg
 pub struct Transcoder {
     config: ChannelConfig,
-    strategy: TranscodeStrategy,
     process: Arc<RwLock<Option<Child>>>,
+    restart_count: Arc<RwLock<u32>>,
 }
 
 impl Clone for Transcoder {
     fn clone(&self) -> Self {
         Self {
             config: self.config.clone(),
-            strategy: self.strategy.clone(),
             process: Arc::clone(&self.process),
+            restart_count: Arc::clone(&self.restart_count),
         }
     }
 }
 
 impl Transcoder {
-    pub fn new(config: ChannelConfig, strategy: TranscodeStrategy) -> Result<Self, TranscoderError> {
+    pub fn new(config: ChannelConfig) -> Result<Self, TranscoderError> {
         Ok(Self {
             config,
-            strategy,
             process: Arc::new(RwLock::new(None)),
+            restart_count: Arc::new(RwLock::new(0)),
         })
     }
     
     pub async fn run(&mut self, stats: Arc<RwLock<ChannelStats>>) -> Result<(), TranscoderError> {
-        info!("Iniciando transcoder para canal: {}", self.config.id);
-        
-        // Construir comando FFmpeg según estrategia
+        loop {
+            if let Err(e) = self.run_once(stats.clone()).await {
+                error!("Error en FFmpeg (canal {}): {}", self.config.id, e);
+                
+                let mut count = self.restart_count.write().await;
+                *count += 1;
+                
+                if *count > 10 {
+                    error!("Canal {} alcanzó máximo número de reintentos", self.config.id);
+                    return Err(e);
+                }
+                
+                drop(count);
+                
+                let wait_time = Duration::from_secs((*self.restart_count.read().await as u64).min(30));
+                sleep(wait_time).await;
+            } else {
+                break;
+            }
+        }
+        Ok(())
+    }
+    
+    async fn run_once(&mut self, stats: Arc<RwLock<ChannelStats>>) -> Result<(), TranscoderError> {
         let mut cmd = self.build_ffmpeg_command();
         
-        // Spawn proceso
         let mut child = cmd.spawn()
             .map_err(|e| TranscoderError::ProcessSpawnFailed(e.to_string()))?;
         
-        // Capturar stderr para estadísticas
         if let Some(stderr) = child.stderr.take() {
             let channel_id = self.config.id.clone();
             tokio::spawn(async move {
@@ -53,23 +73,15 @@ impl Transcoder {
             });
         }
         
-        // Guardar proceso
         {
             let mut process = self.process.write().await;
             *process = Some(child);
         }
         
-        // Esperar a que termine (o sea detenido)
         let mut process = self.process.write().await;
         if let Some(child) = process.as_mut() {
-            match child.wait().await {
-                Ok(status) => {
-                    info!("Proceso FFmpeg terminó con status: {:?}", status);
-                }
-                Err(e) => {
-                    error!("Error esperando proceso: {}", e);
-                }
-            }
+            child.wait().await
+                .map_err(|e| TranscoderError::ProcessSpawnFailed(e.to_string()))?;
         }
         
         Ok(())
@@ -79,9 +91,7 @@ impl Transcoder {
         let mut process = self.process.write().await;
         
         if let Some(child) = process.as_mut() {
-            info!("Deteniendo proceso FFmpeg");
-            child.kill().await
-                .map_err(|e| TranscoderError::ProcessKillFailed(e.to_string()))?;
+            let _ = child.kill().await;
         }
         
         *process = None;
@@ -89,224 +99,27 @@ impl Transcoder {
     }
     
     fn build_ffmpeg_command(&self) -> Command {
-        let mut cmd = Command::new("ffmpeg");
-        
-        // Argumentos base
-        cmd.args(&["-hide_banner", "-stats", "-loglevel", "info"]);
-        
-        // Construir según estrategia
-        match &self.strategy {
-            TranscodeStrategy::PassThrough => {
-                self.build_passthrough_command(&mut cmd);
-            }
-            TranscodeStrategy::TranscodeVideo => {
-                self.build_transcode_video_command(&mut cmd);
-            }
-            TranscodeStrategy::TranscodeAudio => {
-                self.build_transcode_audio_command(&mut cmd);
-            }
-            TranscodeStrategy::TranscodeBoth => {
-                self.build_transcode_both_command(&mut cmd);
-            }
-        }
-        
-        cmd.stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        
-        cmd
-    }
-    
-    fn build_passthrough_command(&self, cmd: &mut Command) {
-        info!("Construyendo comando PassThrough (copy)");
+        let mut cmd = Command::new("/usr/bin/ffmpeg");
         
         cmd.args(&[
-            "-fflags", "+genpts",
+            "-loglevel", "info",
+            "-stats",
             "-i", &self.config.input.url,
             "-c", "copy",
             "-f", "mpegts",
-            "-mpegts_copyts", "1",
-            "-y",
         ]);
         
-        // Output UDP
-        self.add_output_args(cmd);
-    }
-    
-    fn build_transcode_video_command(&self, cmd: &mut Command) {
-        info!("Construyendo comando de transcodificación de video");
-        
-        cmd.args(&[
-            "-fflags", "+genpts",
-            "-i", &self.config.input.url,
-        ]);
-        
-        // Video encoding
-        self.add_video_encoding_args(cmd);
-        
-        // Audio copy
-        cmd.args(&["-c:a", "copy"]);
-        
-        // Output
-        cmd.args(&["-f", "mpegts", "-y"]);
-        self.add_output_args(cmd);
-    }
-    
-    fn build_transcode_audio_command(&self, cmd: &mut Command) {
-        info!("Construyendo comando de transcodificación de audio");
-        
-        cmd.args(&[
-            "-fflags", "+genpts",
-            "-i", &self.config.input.url,
-            "-c:v", "copy",
-        ]);
-        
-        // Audio encoding
-        self.add_audio_encoding_args(cmd);
-        
-        // Output
-        cmd.args(&["-f", "mpegts", "-y"]);
-        self.add_output_args(cmd);
-    }
-    
-    fn build_transcode_both_command(&self, cmd: &mut Command) {
-        info!("Construyendo comando de transcodificación completa");
-        
-        cmd.args(&[
-            "-fflags", "+genpts",
-            "-i", &self.config.input.url,
-        ]);
-        
-        // Video encoding
-        self.add_video_encoding_args(cmd);
-        
-        // Audio encoding
-        self.add_audio_encoding_args(cmd);
-        
-        // Output
-        cmd.args(&["-f", "mpegts", "-y"]);
-        self.add_output_args(cmd);
-    }
-    
-    fn add_video_encoding_args(&self, cmd: &mut Command) {
-        // Si la estrategia es PassThrough, no agregar args de encoding de video
-        if self.strategy == TranscodeStrategy::PassThrough || 
-           (self.strategy == TranscodeStrategy::TranscodeAudio) {
-            cmd.args(&["-c:v", "copy"]);
-            return;
-        }
-        
-        // Si no hay configuración de video, copiar stream
-        let video = match self.config.transcoding.as_ref().and_then(|tc| tc.video.as_ref()) {
-            Some(cfg) => cfg,
-            None => {
-                cmd.args(&["-c:v", "copy"]);
-                return;
-            }
-        };
-        
-        // Codec
-        if video.hardware_acceleration.enabled {
-            match video.hardware_acceleration.r#type.as_str() {
-                "nvenc" => cmd.args(&["-c:v", "h264_nvenc"]),
-                "vaapi" => cmd.args(&["-c:v", "h264_vaapi"]),
-                "qsv" => cmd.args(&["-c:v", "h264_qsv"]),
-                _ => cmd.args(&["-c:v", &video.codec]),
-            };
-        } else {
-            cmd.args(&["-c:v", &format!("lib{}", video.codec)]);
-        }
-        
-        // Perfil y nivel
-        cmd.args(&[
-            "-profile:v", &video.profile,
-            "-level", &video.level,
-        ]);
-        
-        // Rate control
-        match video.rate_control.as_str() {
-            "cbr" => {
-                cmd.args(&[
-                    "-b:v", &format!("{}k", video.bitrate_kbps),
-                    "-minrate", &format!("{}k", video.bitrate_kbps),
-                    "-maxrate", &format!("{}k", video.bitrate_kbps),
-                    "-bufsize", &format!("{}k", video.buffer_size_kb),
-                ]);
-            }
-            "vbr" => {
-                cmd.args(&[
-                    "-b:v", &format!("{}k", video.bitrate_kbps),
-                    "-maxrate", &format!("{}k", video.max_bitrate_kbps),
-                    "-bufsize", &format!("{}k", video.buffer_size_kb),
-                ]);
-            }
-            _ => {
-                cmd.args(&["-b:v", &format!("{}k", video.bitrate_kbps)]);
-            }
-        }
-        
-        // GOP settings
-        cmd.args(&[
-            "-g", &video.gop_size.to_string(),
-            "-keyint_min", &(video.gop_size / 2).to_string(),
-        ]);
-        
-        // Preset y tuning (solo para libx264)
-        if !video.hardware_acceleration.enabled {
-            cmd.args(&[
-                "-preset", &video.preset,
-                "-tune", &video.tune,
-            ]);
-        }
-        
-        // Framerate
-        cmd.args(&["-r", &video.framerate.to_string()]);
-    }
-    
-    fn add_audio_encoding_args(&self, cmd: &mut Command) {
-        // Si la estrategia es PassThrough, no agregar args de encoding de audio
-        if self.strategy == TranscodeStrategy::PassThrough || 
-           (self.strategy == TranscodeStrategy::TranscodeVideo) {
-            cmd.args(&["-c:a", "copy"]);
-            return;
-        }
-        
-        // Si no hay configuración de audio, copiar stream
-        let audio = match self.config.transcoding.as_ref().and_then(|tc| tc.audio.as_ref()) {
-            Some(cfg) => cfg,
-            None => {
-                cmd.args(&["-c:a", "copy"]);
-                return;
-            }
-        };
-        
-        cmd.args(&[
-            "-c:a", &audio.codec,
-            "-b:a", &format!("{}k", audio.bitrate_kbps),
-            "-ar", &audio.sample_rate.to_string(),
-            "-ac", &audio.channels.to_string(),
-        ]);
+        self.add_output_args(&mut cmd);
+        cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+        cmd
     }
     
     fn add_output_args(&self, cmd: &mut Command) {
         let output = &self.config.output;
-        
-        // Construir URL de salida con parámetros
         let mut output_url = output.url.clone();
         
         if let Some(local_if) = &output.local_interface {
-            if output_url.contains('?') {
-                output_url.push_str(&format!("&localaddr={}", local_if));
-            } else {
-                output_url.push_str(&format!("?localaddr={}", local_if));
-            }
-        }
-        
-        if let Some(ttl) = output.ttl {
-            if output_url.contains('?') {
-                output_url.push_str(&format!("&ttl={}", ttl));
-            } else {
-                output_url.push_str(&format!("?ttl={}", ttl));
-            }
+            output_url.push_str(&format!("?localaddr={}", local_if));
         }
         
         if let Some(pkt_size) = output.packet_size {

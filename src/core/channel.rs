@@ -1,13 +1,11 @@
 use crate::config::loader::ChannelConfig;
 use crate::core::transcoder::Transcoder;
-use crate::core::analyzer::StreamAnalyzer;
-use crate::core::strategy::decide_strategy;
 use crate::models::stats::{ChannelStats, ChannelStatus};
 use crate::models::error::TranscoderError;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;
-use tracing::{info, warn, error};
+use tracing::{warn, error};
 
 /// Representa un canal de transcodificación individual
 pub struct Channel {
@@ -19,8 +17,6 @@ pub struct Channel {
 
 impl Channel {
     pub fn new(config: ChannelConfig) -> Result<Self, TranscoderError> {
-        info!("Creando canal: {} ({})", config.id, config.name);
-        
         let stats = Arc::new(RwLock::new(ChannelStats {
             channel_id: config.id.clone(),
             status: ChannelStatus::Stopped,
@@ -50,53 +46,14 @@ impl Channel {
             return Err(TranscoderError::ChannelAlreadyRunning(self.config.id.clone()));
         }
         
-        info!("Iniciando canal: {}", self.config.id);
-        
         {
             let mut stats = self.stats.write().await;
             stats.status = ChannelStatus::Starting;
             stats.started_at = Some(chrono::Utc::now());
         }
         
-        // Determinar estrategia según el modo del canal
-        let strategy = if self.is_transcoding_enabled() {
-            info!("Modo transcoding detectado para canal: {}", self.config.id);
-            
-            // Analizar stream de entrada (si auto_detect está habilitado)
-            if let Some(ref transcoding_cfg) = self.config.transcoding {
-                if let Some(ref analysis_cfg) = transcoding_cfg.analysis {
-                    if analysis_cfg.auto_detect {
-                        info!("Analizando stream de entrada...");
-                        match StreamAnalyzer::analyze(&self.config.input.url).await {
-                            Ok(stream_info) => {
-                                info!("Stream detectado: {:?}", stream_info);
-                                decide_strategy(&stream_info, &self.config)
-                            }
-                            Err(e) => {
-                                warn!("Error analizando stream, usando estrategia por defecto: {}", e);
-                                crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
-                            }
-                        }
-                    } else {
-                        crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
-                    }
-                } else {
-                    crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
-                }
-            } else {
-                crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
-            }
-        } else {
-            info!("Modo pass-through detectado para canal: {}", self.config.id);
-            crate::core::strategy::TranscodeStrategy::PassThrough
-        };
+        let transcoder = Transcoder::new(self.config.clone())?;
         
-        info!("Estrategia seleccionada: {:?}", strategy);
-        
-        // Crear transcoder con la estrategia decidida
-        let transcoder = Transcoder::new(self.config.clone(), strategy)?;
-        
-        // Iniciar transcoder
         let stats_clone = self.stats.clone();
         let mut transcoder_clone = transcoder.clone();
         
@@ -114,13 +71,10 @@ impl Channel {
             stats.status = ChannelStatus::Running;
         }
         
-        info!("Canal {} iniciado exitosamente", self.config.id);
         Ok(())
     }
     
     pub async fn stop(&mut self) -> Result<(), TranscoderError> {
-        info!("Deteniendo canal: {}", self.config.id);
-        
         if let Some(mut transcoder) = self.transcoder.take() {
             transcoder.stop().await?;
         }
@@ -134,7 +88,6 @@ impl Channel {
             stats.status = ChannelStatus::Stopped;
         }
         
-        info!("Canal {} detenido", self.config.id);
         Ok(())
     }
     
@@ -179,36 +132,18 @@ impl Channel {
     }
     
     pub async fn update_config(&mut self, new_config: ChannelConfig) -> Result<(), TranscoderError> {
-        info!("Actualizando configuración del canal: {}", self.config.id);
-        
-        // Detener canal actual
         self.stop().await?;
-        
-        // Actualizar configuración
         self.config = new_config;
-        
-        // Reiniciar con nueva configuración
         self.start().await?;
-        
         Ok(())
     }
     
     pub fn get_config(&self) -> &ChannelConfig {
         &self.config
     }
-    
-    /// Determina si el canal está configurado para transcoding
-    fn is_transcoding_enabled(&self) -> bool {
-        self.config
-            .transcoding
-            .as_ref()
-            .map(|tc| tc.enabled)
-            .unwrap_or(false)
-    }
 }
 
 impl Drop for Channel {
     fn drop(&mut self) {
-        info!("Destruyendo canal: {}", self.config.id);
     }
 }

@@ -1,0 +1,10 @@
+{
+  "id": "channel-1",
+  "name": "SRT to UDP",
+  "input": {
+    "url": "srt://181.79.86.130:20582?mode=caller&latency=200000"
+  },
+  "output": {
+    "url": "udp://239.10.10.20:1234?localaddr=192.168.2.140&pkt_size=1316"
+  }
+}

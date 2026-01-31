@@ -188,7 +188,21 @@ impl Transcoder {
     }
     
     fn add_video_encoding_args(&self, cmd: &mut Command) {
-        let video = &self.config.video;
+        // Si la estrategia es PassThrough, no agregar args de encoding de video
+        if self.strategy == TranscodeStrategy::PassThrough || 
+           (self.strategy == TranscodeStrategy::TranscodeAudio) {
+            cmd.args(&["-c:v", "copy"]);
+            return;
+        }
+        
+        // Si no hay configuración de video, copiar stream
+        let video = match self.config.transcoding.as_ref().and_then(|tc| tc.video.as_ref()) {
+            Some(cfg) => cfg,
+            None => {
+                cmd.args(&["-c:v", "copy"]);
+                return;
+            }
+        };
         
         // Codec
         if video.hardware_acceleration.enabled {
@@ -249,7 +263,21 @@ impl Transcoder {
     }
     
     fn add_audio_encoding_args(&self, cmd: &mut Command) {
-        let audio = &self.config.audio;
+        // Si la estrategia es PassThrough, no agregar args de encoding de audio
+        if self.strategy == TranscodeStrategy::PassThrough || 
+           (self.strategy == TranscodeStrategy::TranscodeVideo) {
+            cmd.args(&["-c:a", "copy"]);
+            return;
+        }
+        
+        // Si no hay configuración de audio, copiar stream
+        let audio = match self.config.transcoding.as_ref().and_then(|tc| tc.audio.as_ref()) {
+            Some(cfg) => cfg,
+            None => {
+                cmd.args(&["-c:a", "copy"]);
+                return;
+            }
+        };
         
         cmd.args(&[
             "-c:a", &audio.codec,

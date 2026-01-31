@@ -22,20 +22,49 @@ pub enum TranscodeStrategy {
 impl TranscodeStrategy {
     /// Crear estrategia por defecto basada en la configuración del canal
     pub fn default_for_config(config: &ChannelConfig) -> Self {
-        if config.analysis.force_transcode {
-            Self::TranscodeBoth
-        } else {
-            Self::PassThrough
+        // Si no hay configuración de transcoding, siempre es PassThrough
+        if !is_transcoding_configured(config) {
+            return Self::PassThrough;
         }
+        
+        // Si hay configuración de transcoding
+        if let Some(ref transcoding) = config.transcoding {
+            if let Some(ref analysis) = transcoding.analysis {
+                if analysis.force_transcode {
+                    return Self::TranscodeBoth;
+                }
+            }
+        }
+        
+        Self::PassThrough
     }
+}
+
+/// Determina si la configuración tiene transcoding habilitado
+fn is_transcoding_configured(config: &ChannelConfig) -> bool {
+    config
+        .transcoding
+        .as_ref()
+        .map(|tc| tc.enabled)
+        .unwrap_or(false)
 }
 
 /// Decide la estrategia óptima basándose en el análisis del stream
 pub fn decide_strategy(stream_info: &StreamInfo, config: &ChannelConfig) -> TranscodeStrategy {
+    // Si no hay configuración de transcoding, es PassThrough
+    if !is_transcoding_configured(config) {
+        info!("Sin configuración de transcoding, usando PassThrough");
+        return TranscodeStrategy::PassThrough;
+    }
+    
+    let transcoding = config.transcoding.as_ref().unwrap();
+    
     // Si está forzado a transcodificar, no analizar
-    if config.analysis.force_transcode {
-        info!("Transcodificación forzada por configuración");
-        return TranscodeStrategy::TranscodeBoth;
+    if let Some(ref analysis) = transcoding.analysis {
+        if analysis.force_transcode {
+            info!("Transcodificación forzada por configuración");
+            return TranscodeStrategy::TranscodeBoth;
+        }
     }
     
     // Analizar compatibilidad de video
@@ -47,12 +76,17 @@ pub fn decide_strategy(stream_info: &StreamInfo, config: &ChannelConfig) -> Tran
     // Decidir estrategia
     let strategy = match (video_compatible, audio_compatible) {
         (true, true) => {
-            if config.analysis.passthrough_if_compatible {
-                info!("Stream compatible, usando PassThrough");
-                TranscodeStrategy::PassThrough
+            if let Some(ref analysis) = transcoding.analysis {
+                if analysis.passthrough_if_compatible {
+                    info!("Stream compatible, usando PassThrough");
+                    TranscodeStrategy::PassThrough
+                } else {
+                    info!("Stream compatible pero passthrough deshabilitado");
+                    TranscodeStrategy::TranscodeBoth
+                }
             } else {
-                info!("Stream compatible pero passthrough deshabilitado");
-                TranscodeStrategy::TranscodeBoth
+                info!("Stream compatible, usando PassThrough (sin análisis configurado)");
+                TranscodeStrategy::PassThrough
             }
         }
         (false, true) => {
@@ -74,7 +108,11 @@ pub fn decide_strategy(stream_info: &StreamInfo, config: &ChannelConfig) -> Tran
 
 /// Verifica si el video del stream es compatible con la configuración CATV
 fn is_video_compatible(stream_info: &StreamInfo, config: &ChannelConfig) -> bool {
-    let video_cfg = &config.video;
+    // Si no hay configuración de video, consideramos compatible para pass-through
+    let video_cfg = match config.transcoding.as_ref().and_then(|tc| tc.video.as_ref()) {
+        Some(cfg) => cfg,
+        None => return true,
+    };
     
     // 1. Verificar codec
     let codec_ok = stream_info.video_codec == video_cfg.codec 
@@ -120,7 +158,10 @@ fn is_video_compatible(stream_info: &StreamInfo, config: &ChannelConfig) -> bool
 
 /// Verifica el bitrate del video
 fn check_video_bitrate(stream_info: &StreamInfo, config: &ChannelConfig) -> bool {
-    let video_cfg = &config.video;
+    let video_cfg = match config.transcoding.as_ref().and_then(|tc| tc.video.as_ref()) {
+        Some(cfg) => cfg,
+        None => return true,
+    };
     
     // Para CATV necesitamos CBR o bitrate muy cercano al objetivo
     if video_cfg.rate_control == "cbr" {
@@ -152,7 +193,11 @@ fn check_video_bitrate(stream_info: &StreamInfo, config: &ChannelConfig) -> bool
 
 /// Verifica si el audio del stream es compatible
 fn is_audio_compatible(stream_info: &StreamInfo, config: &ChannelConfig) -> bool {
-    let audio_cfg = &config.audio;
+    // Si no hay configuración de audio, consideramos compatible para pass-through
+    let audio_cfg = match config.transcoding.as_ref().and_then(|tc| tc.audio.as_ref()) {
+        Some(cfg) => cfg,
+        None => return true,
+    };
     
     // 1. Verificar codec
     let codec_ok = stream_info.audio_codec == audio_cfg.codec;
@@ -210,14 +255,29 @@ pub fn decide_strategy_with_reasons(
 ) -> StrategyReason {
     let mut reasons = Vec::new();
     
-    if config.analysis.force_transcode {
-        reasons.push("Transcodificación forzada por configuración".to_string());
+    // Si no hay configuración de transcoding, es PassThrough
+    if !is_transcoding_configured(config) {
+        reasons.push("Sin configuración de transcoding, usando PassThrough".to_string());
         return StrategyReason {
-            strategy: TranscodeStrategy::TranscodeBoth,
-            video_compatible: false,
-            audio_compatible: false,
+            strategy: TranscodeStrategy::PassThrough,
+            video_compatible: true,
+            audio_compatible: true,
             reasons,
         };
+    }
+    
+    let transcoding = config.transcoding.as_ref().unwrap();
+    
+    if let Some(ref analysis) = transcoding.analysis {
+        if analysis.force_transcode {
+            reasons.push("Transcodificación forzada por configuración".to_string());
+            return StrategyReason {
+                strategy: TranscodeStrategy::TranscodeBoth,
+                video_compatible: false,
+                audio_compatible: false,
+                reasons,
+            };
+        }
     }
     
     // Analizar video
@@ -247,12 +307,17 @@ pub fn decide_strategy_with_reasons(
     
     let strategy = match (video_compatible, audio_compatible) {
         (true, true) => {
-            if config.analysis.passthrough_if_compatible {
+            if let Some(ref analysis) = transcoding.analysis {
+                if analysis.passthrough_if_compatible {
+                    reasons.push("Stream totalmente compatible, usando PassThrough".to_string());
+                    TranscodeStrategy::PassThrough
+                } else {
+                    reasons.push("Passthrough deshabilitado en configuración".to_string());
+                    TranscodeStrategy::TranscodeBoth
+                }
+            } else {
                 reasons.push("Stream totalmente compatible, usando PassThrough".to_string());
                 TranscodeStrategy::PassThrough
-            } else {
-                reasons.push("Passthrough deshabilitado en configuración".to_string());
-                TranscodeStrategy::TranscodeBoth
             }
         }
         (false, true) => {

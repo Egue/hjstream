@@ -72,27 +72,38 @@ impl ConfigValidator {
             return Err("La URL de salida no puede estar vacía".to_string());
         }
         
-        // Validar bitrates
-        if config.video.bitrate_kbps == 0 {
-            return Err("El bitrate de video debe ser mayor a 0".to_string());
-        }
-        
-        if config.video.max_bitrate_kbps < config.video.bitrate_kbps {
-            return Err("El bitrate máximo debe ser mayor o igual al bitrate normal".to_string());
-        }
-        
-        if config.audio.bitrate_kbps == 0 {
-            return Err("El bitrate de audio debe ser mayor a 0".to_string());
-        }
-        
-        // Validar resolución
-        if config.video.framerate == 0 {
-            return Err("El framerate debe ser mayor a 0".to_string());
-        }
-        
-        // Validar MPEG-TS PIDs
-        if config.mpegts.video_pid == config.mpegts.audio_pid {
-            return Err("Los PIDs de video y audio deben ser diferentes".to_string());
+        // Validar transcoding si está habilitado
+        if let Some(ref transcoding) = config.transcoding {
+            if transcoding.enabled {
+                // Validar video si está configurado
+                if let Some(ref video) = transcoding.video {
+                    if video.bitrate_kbps == 0 {
+                        return Err("El bitrate de video debe ser mayor a 0".to_string());
+                    }
+                    
+                    if video.max_bitrate_kbps < video.bitrate_kbps {
+                        return Err("El bitrate máximo debe ser mayor o igual al bitrate normal".to_string());
+                    }
+                    
+                    if video.framerate == 0 {
+                        return Err("El framerate debe ser mayor a 0".to_string());
+                    }
+                }
+                
+                // Validar audio si está configurado
+                if let Some(ref audio) = transcoding.audio {
+                    if audio.bitrate_kbps == 0 {
+                        return Err("El bitrate de audio debe ser mayor a 0".to_string());
+                    }
+                }
+                
+                // Validar MPEGTS si está configurado
+                if let Some(ref mpegts) = transcoding.mpegts {
+                    if mpegts.video_pid == mpegts.audio_pid {
+                        return Err("Los PIDs de video y audio deben ser diferentes".to_string());
+                    }
+                }
+            }
         }
         
         Ok(())

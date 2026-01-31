@@ -58,21 +58,37 @@ impl Channel {
             stats.started_at = Some(chrono::Utc::now());
         }
         
-        // Analizar stream de entrada (si auto_detect está habilitado)
-        let strategy = if self.config.analysis.auto_detect {
-            info!("Analizando stream de entrada...");
-            match StreamAnalyzer::analyze(&self.config.input.url).await {
-                Ok(stream_info) => {
-                    info!("Stream detectado: {:?}", stream_info);
-                    decide_strategy(&stream_info, &self.config)
-                }
-                Err(e) => {
-                    warn!("Error analizando stream, usando estrategia por defecto: {}", e);
+        // Determinar estrategia según el modo del canal
+        let strategy = if self.is_transcoding_enabled() {
+            info!("Modo transcoding detectado para canal: {}", self.config.id);
+            
+            // Analizar stream de entrada (si auto_detect está habilitado)
+            if let Some(ref transcoding_cfg) = self.config.transcoding {
+                if let Some(ref analysis_cfg) = transcoding_cfg.analysis {
+                    if analysis_cfg.auto_detect {
+                        info!("Analizando stream de entrada...");
+                        match StreamAnalyzer::analyze(&self.config.input.url).await {
+                            Ok(stream_info) => {
+                                info!("Stream detectado: {:?}", stream_info);
+                                decide_strategy(&stream_info, &self.config)
+                            }
+                            Err(e) => {
+                                warn!("Error analizando stream, usando estrategia por defecto: {}", e);
+                                crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
+                            }
+                        }
+                    } else {
+                        crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
+                    }
+                } else {
                     crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
                 }
+            } else {
+                crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
             }
         } else {
-            crate::core::strategy::TranscodeStrategy::default_for_config(&self.config)
+            info!("Modo pass-through detectado para canal: {}", self.config.id);
+            crate::core::strategy::TranscodeStrategy::PassThrough
         };
         
         info!("Estrategia seleccionada: {:?}", strategy);
@@ -179,6 +195,15 @@ impl Channel {
     
     pub fn get_config(&self) -> &ChannelConfig {
         &self.config
+    }
+    
+    /// Determina si el canal está configurado para transcoding
+    fn is_transcoding_enabled(&self) -> bool {
+        self.config
+            .transcoding
+            .as_ref()
+            .map(|tc| tc.enabled)
+            .unwrap_or(false)
     }
 }
 

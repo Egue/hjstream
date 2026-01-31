@@ -1,5 +1,5 @@
 [package]
-name = "catv-transcoder-client"
+name = "hjstream"
 version = "0.1.0"
 edition = "2021"
 authors = ["HjSolutions <eguee23@icloud.com>"]
@@ -91,5 +91,5 @@ opt-level = 0
 debug = true
 
 [[bin]]
-name = "catv-transcoder"
+name = "hjstream"
 path = "src/main.rs"

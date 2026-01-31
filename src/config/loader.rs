@@ -120,13 +120,31 @@ pub struct ChannelConfig {
     pub mode: String,
     pub input: InputConfig,
     pub output: OutputConfig,
-    pub video: VideoConfig,
-    pub audio: AudioConfig,
-    pub mpegts: MpegTsConfig,
-    pub analysis: AnalysisConfig,
-    pub monitoring: MonitoringConfig,
-    pub failover: FailoverConfig,
+    
+    // Transcoding es opcional
+    #[serde(default)]
+    pub transcoding: Option<TranscodingConfig>,
+    
+    // Monitoreo básico es opcional
+    #[serde(default)]
+    pub monitoring: Option<MonitoringConfig>,
+    
+    // Failover es opcional
+    #[serde(default)]
+    pub failover: Option<FailoverConfig>,
+    
+    #[serde(default)]
     pub metadata: serde_json::Value,
+}
+
+/// Configuración de transcodificación (opcional)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TranscodingConfig {
+    pub enabled: bool,
+    pub video: Option<VideoConfig>,
+    pub audio: Option<AudioConfig>,
+    pub mpegts: Option<MpegTsConfig>,
+    pub analysis: Option<AnalysisConfig>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

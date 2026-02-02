@@ -10,6 +10,9 @@ use tokio::sync::RwLock;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt;
+
 pub struct ProcessManager {
     processes: Arc<RwLock<HashMap<Uuid, Child>>>,
     storage: Arc<Storage>,
@@ -115,20 +118,26 @@ impl ProcessManager {
                     let exit_status = child.wait().await?;
                     
                     let exit_msg = format!(
-                        "[{}] FFmpeg process terminated - Exit code: {:?}, Signal: {:?}",
+                        "[{}] FFmpeg process terminated - Exit code: {:?}{}",
                         chrono::Utc::now(),
                         exit_status.code(),
-                        exit_status.signal()
+                        #[cfg(unix)]
+                        format!(", Signal: {:?}", exit_status.signal()),
+                        #[cfg(not(unix))]
+                        String::new()
                     );
                     
                     // Log del exit status
                     self.log_to_file(&channel.get_log_file(), &exit_msg).await?;
                     
                     tracing::warn!(
-                        "FFmpeg stopped for channel {} - Exit code: {:?}, Signal: {:?}, Retry count: {}",
+                        "FFmpeg stopped for channel {} - Exit code: {:?}{}, Retry count: {}",
                         channel.name,
                         exit_status.code(),
-                        exit_status.signal(),
+                        #[cfg(unix)]
+                        format!(", Signal: {:?}", exit_status.signal()),
+                        #[cfg(not(unix))]
+                        String::new(),
                         retry_count
                     );
 
@@ -151,10 +160,19 @@ impl ProcessManager {
                         Some(1) => "General error (code 1) - Check input URL and network".to_string(),
                         Some(255) | Some(-1) => "Connection error or killed (code 255) - Check SRT/network connection".to_string(),
                         Some(code) => format!("Process exited with code {}", code),
-                        None => match exit_status.signal() {
-                            Some(signal) => format!("Process killed by signal {}", signal),
-                            None => "Process terminated with unknown status".to_string(),
-                        },
+                        None => {
+                            #[cfg(unix)]
+                            {
+                                match exit_status.signal() {
+                                    Some(signal) => format!("Process killed by signal {}", signal),
+                                    None => "Process terminated with unknown status".to_string(),
+                                }
+                            }
+                            #[cfg(not(unix))]
+                            {
+                                "Process terminated with unknown status".to_string()
+                            }
+                        }
                     };
 
                     // Actualizar estado a Reconnecting
@@ -240,6 +258,8 @@ impl ProcessManager {
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
+            // kill_on_drop solo en Unix
+            #[cfg(unix)]
             .kill_on_drop(true)
             .spawn()
             .context("Failed to spawn FFmpeg process")?;

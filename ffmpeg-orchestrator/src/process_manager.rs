@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::process::Stdio;
 use std::sync::Arc;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::RwLock;
 use tokio::time::{sleep, Duration};
@@ -76,11 +76,19 @@ impl ProcessManager {
     }
 
     async fn run_ffmpeg_with_retry(&self, channel: Channel) -> Result<()> {
+        let mut retry_count = 0;
+        
         loop {
-            tracing::info!("Starting FFmpeg for channel: {}", channel.name);
+            retry_count += 1;
+            
+            tracing::info!(
+                "Starting FFmpeg for channel: {} (attempt #{})",
+                channel.name,
+                retry_count
+            );
 
             match self.spawn_ffmpeg(&channel).await {
-                Ok(child) => {
+                Ok(mut child) => {
                     let pid = child.id();
                     
                     // Guardar el proceso
@@ -104,12 +112,24 @@ impl ProcessManager {
                         processes.remove(&channel.id).unwrap()
                     };
 
-                    let status = child.wait().await?;
+                    let exit_status = child.wait().await?;
+                    
+                    let exit_msg = format!(
+                        "[{}] FFmpeg process terminated - Exit code: {:?}, Signal: {:?}",
+                        chrono::Utc::now(),
+                        exit_status.code(),
+                        exit_status.signal()
+                    );
+                    
+                    // Log del exit status
+                    self.log_to_file(&channel.get_log_file(), &exit_msg).await?;
                     
                     tracing::warn!(
-                        "FFmpeg stopped for channel {}: {:?}",
+                        "FFmpeg stopped for channel {} - Exit code: {:?}, Signal: {:?}, Retry count: {}",
                         channel.name,
-                        status
+                        exit_status.code(),
+                        exit_status.signal(),
+                        retry_count
                     );
 
                     // Verificar si el canal debe seguir corriendo
@@ -117,7 +137,7 @@ impl ProcessManager {
                         if current_channel.status != ChannelStatus::Running
                             && current_channel.status != ChannelStatus::Reconnecting
                         {
-                            tracing::info!("Channel {} was stopped, not reconnecting", channel.name);
+                            tracing::info!("Channel {} was stopped manually, not reconnecting", channel.name);
                             break;
                         }
                     } else {
@@ -125,32 +145,55 @@ impl ProcessManager {
                         break;
                     }
 
+                    // Determinar el mensaje de error basado en el exit code
+                    let error_msg = match exit_status.code() {
+                        Some(0) => "Process exited normally (code 0)".to_string(),
+                        Some(1) => "General error (code 1) - Check input URL and network".to_string(),
+                        Some(255) | Some(-1) => "Connection error or killed (code 255) - Check SRT/network connection".to_string(),
+                        Some(code) => format!("Process exited with code {}", code),
+                        None => match exit_status.signal() {
+                            Some(signal) => format!("Process killed by signal {}", signal),
+                            None => "Process terminated with unknown status".to_string(),
+                        },
+                    };
+
                     // Actualizar estado a Reconnecting
                     self.storage
                         .update_channel(channel.id, |c| {
                             c.status = ChannelStatus::Reconnecting;
                             c.pid = None;
+                            c.error_message = Some(error_msg.clone());
                         })
                         .await?;
 
                     // Log de reconexión
-                    self.log_to_file(
-                        &channel.get_log_file(),
-                        &format!("[{}] FFmpeg stopped. Reconnecting in 5s...", chrono::Utc::now()),
-                    )
-                    .await?;
+                    let reconnect_msg = format!(
+                        "[{}] FFmpeg stopped: {}. Reconnecting in 5s... (attempt #{})",
+                        chrono::Utc::now(),
+                        error_msg,
+                        retry_count + 1
+                    );
+                    
+                    self.log_to_file(&channel.get_log_file(), &reconnect_msg).await?;
 
                     sleep(Duration::from_secs(5)).await;
                 }
                 Err(e) => {
                     tracing::error!("Failed to spawn FFmpeg for channel {}: {:?}", channel.name, e);
                     
+                    let error_msg = format!("Failed to spawn FFmpeg: {}", e);
+                    
                     self.storage
                         .update_channel(channel.id, |c| {
                             c.status = ChannelStatus::Error;
-                            c.error_message = Some(e.to_string());
+                            c.error_message = Some(error_msg.clone());
                         })
                         .await?;
+
+                    self.log_to_file(
+                        &channel.get_log_file(),
+                        &format!("[{}] Spawn error: {}. Retrying in 10s...", chrono::Utc::now(), error_msg),
+                    ).await?;
 
                     sleep(Duration::from_secs(10)).await;
                 }
@@ -165,14 +208,25 @@ impl ProcessManager {
         let output_url = channel.get_output_url();
         let log_file = channel.get_log_file();
 
-        // Log de inicio
-        self.log_to_file(
-            &log_file,
-            &format!("[{}] Starting FFmpeg for {}", chrono::Utc::now(), channel.name),
-        )
-        .await?;
+        // Log de inicio con información de conexión
+        let start_msg = format!(
+            "[{}] Starting FFmpeg for {}\n  Input: {}\n  Output: {}",
+            chrono::Utc::now(),
+            channel.name,
+            input_url,
+            output_url
+        );
+        
+        self.log_to_file(&log_file, &start_msg).await?;
+        
+        tracing::info!(
+            "Starting FFmpeg - Channel: {}, Input: {}, Output: {}",
+            channel.name,
+            input_url,
+            output_url
+        );
 
-        let child = Command::new("ffmpeg")
+        let mut child = Command::new("ffmpeg")
             .arg("-loglevel")
             .arg("info")
             .arg("-stats")
@@ -183,8 +237,10 @@ impl ProcessManager {
             .arg("-f")
             .arg("mpegts")
             .arg(&output_url)
-            .stdout(Stdio::null())
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
             .stderr(Stdio::piped())
+            .kill_on_drop(true)
             .spawn()
             .context("Failed to spawn FFmpeg process")?;
 
@@ -193,6 +249,63 @@ impl ProcessManager {
             channel.name,
             child.id()
         );
+
+        // Capturar stderr en tiempo real
+        if let Some(stderr) = child.stderr.take() {
+            let log_file_clone = log_file.clone();
+            let channel_name = channel.name.clone();
+            
+            tokio::spawn(async move {
+                let reader = BufReader::new(stderr);
+                let mut lines = reader.lines();
+                
+                while let Ok(Some(line)) = lines.next_line().await {
+                    // Loggear a archivo
+                    let log_msg = format!("[{}] FFmpeg: {}", chrono::Utc::now(), line);
+                    
+                    if let Ok(mut file) = tokio::fs::OpenOptions::new()
+                        .create(true)
+                        .append(true)
+                        .open(&log_file_clone)
+                        .await
+                    {
+                        let _ = file.write_all(format!("{}\n", log_msg).as_bytes()).await;
+                    }
+                    
+                    // También loggear errores críticos a tracing
+                    if line.contains("error") || line.contains("Error") || line.contains("ERROR") {
+                        tracing::error!("FFmpeg error in channel {}: {}", channel_name, line);
+                    } else if line.contains("warning") || line.contains("Warning") {
+                        tracing::warn!("FFmpeg warning in channel {}: {}", channel_name, line);
+                    }
+                }
+            });
+        }
+
+        // Capturar stdout también (stats)
+        if let Some(stdout) = child.stdout.take() {
+            let log_file_clone = log_file.clone();
+            
+            tokio::spawn(async move {
+                let reader = BufReader::new(stdout);
+                let mut lines = reader.lines();
+                
+                while let Ok(Some(line)) = lines.next_line().await {
+                    if !line.trim().is_empty() {
+                        let log_msg = format!("[{}] Stats: {}", chrono::Utc::now(), line);
+                        
+                        if let Ok(mut file) = tokio::fs::OpenOptions::new()
+                            .create(true)
+                            .append(true)
+                            .open(&log_file_clone)
+                            .await
+                        {
+                            let _ = file.write_all(format!("{}\n", log_msg).as_bytes()).await;
+                        }
+                    }
+                }
+            });
+        }
 
         Ok(child)
     }
@@ -225,10 +338,10 @@ impl ProcessManager {
         Ok(())
     }
 
-    /*pub async fn is_running(&self, channel_id: Uuid) -> bool {
+    pub async fn is_running(&self, channel_id: Uuid) -> bool {
         let processes = self.processes.read().await;
         processes.contains_key(&channel_id)
-    }*/
+    }
 
     async fn log_to_file(&self, path: &str, message: &str) -> Result<()> {
         let mut file = tokio::fs::OpenOptions::new()

@@ -1,0 +1,183 @@
+{
+  "info": {
+    "name": "FFmpeg Orchestrator API",
+    "description": "Colección de endpoints para gestionar canales FFmpeg",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "channelId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "List All Channels",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels"]
+        }
+      }
+    },
+    {
+      "name": "Get Channel by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels/{{channelId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels", "{{channelId}}"]
+        }
+      }
+    },
+    {
+      "name": "Create SRT Channel",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.collectionVariables.set('channelId', jsonData.channel.id);",
+              "    console.log('Channel ID saved:', jsonData.channel.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"10chv\",\n  \"description\": \"Canal 10 CHV - SRT to UDP\",\n  \"input\": {\n    \"format\": \"srt\",\n    \"url\": \"131.221.42.62:8890\",\n    \"mode\": \"caller\",\n    \"latency\": 200000\n  },\n  \"output\": {\n    \"multicast_ip\": \"239.10.10.10\",\n    \"port\": 1010,\n    \"local_addr\": \"192.168.2.140\",\n    \"pkt_size\": 1316,\n    \"ttl\": 64\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/channels",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels"]
+        }
+      }
+    },
+    {
+      "name": "Create RTMP Channel",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"canal-rtmp-1\",\n  \"description\": \"Canal RTMP de ejemplo\",\n  \"input\": {\n    \"format\": \"rtmp\",\n    \"url\": \"rtmp://live.example.com/stream/key\"\n  },\n  \"output\": {\n    \"multicast_ip\": \"239.10.10.20\",\n    \"port\": 1020,\n    \"local_addr\": \"192.168.2.140\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/channels",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels"]
+        }
+      }
+    },
+    {
+      "name": "Create HLS Channel",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"canal-hls-1\",\n  \"description\": \"Canal HLS de ejemplo\",\n  \"input\": {\n    \"format\": \"hls\",\n    \"url\": \"https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8\"\n  },\n  \"output\": {\n    \"multicast_ip\": \"239.10.10.30\",\n    \"port\": 1030,\n    \"local_addr\": \"192.168.2.140\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/channels",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels"]
+        }
+      }
+    },
+    {
+      "name": "Start Channel",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels/{{channelId}}/start",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels", "{{channelId}}", "start"]
+        }
+      }
+    },
+    {
+      "name": "Stop Channel",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels/{{channelId}}/stop",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels", "{{channelId}}", "stop"]
+        }
+      }
+    },
+    {
+      "name": "Restart Channel",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels/{{channelId}}/restart",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels", "{{channelId}}", "restart"]
+        }
+      }
+    },
+    {
+      "name": "Delete Channel",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/channels/{{channelId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "channels", "{{channelId}}"]
+        }
+      }
+    }
+  ]
+}

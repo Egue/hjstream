@@ -1,0 +1,34 @@
+[Unit]
+Description=FFmpeg Orchestrator Service
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/hjsolutions/ffmpeg-orchestrator
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ffmpeg-orchestrator
+ExecStart=/usr/local/bin/ffmpeg-orchestrator
+
+# Reinicio automático
+Restart=always
+RestartSec=5
+
+# Limites de recursos
+LimitNOFILE=1048576
+LimitNPROC=512
+
+# Variables de entorno
+Environment="RUST_LOG=info"
+
+# Seguridad
+PrivateTmp=false
+NoNewPrivileges=false
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ffmpeg-orchestrator
+
+[Install]
+WantedBy=multi-user.target

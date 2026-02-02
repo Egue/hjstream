@@ -6,7 +6,7 @@ use std::process::Stdio;
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::{Child, Command};
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex};
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
 
@@ -16,6 +16,7 @@ use std::os::unix::process::ExitStatusExt;
 pub struct ProcessManager {
     processes: Arc<RwLock<HashMap<Uuid, Child>>>,
     storage: Arc<Storage>,
+    stop_signals: Arc<Mutex<HashMap<Uuid, bool>>>,
 }
 
 impl ProcessManager {
@@ -23,6 +24,7 @@ impl ProcessManager {
         Self {
             processes: Arc::new(RwLock::new(HashMap::new())),
             storage,
+            stop_signals: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -39,6 +41,12 @@ impl ProcessManager {
             if processes.contains_key(&channel_id) {
                 anyhow::bail!("Channel is already running");
             }
+        }
+
+        // Limpiar cualquier señal de parada anterior
+        {
+            let mut stop_signals = self.stop_signals.lock().await;
+            stop_signals.remove(&channel_id);
         }
 
         // Actualizar estado a Starting
@@ -82,6 +90,15 @@ impl ProcessManager {
         let mut retry_count = 0;
         
         loop {
+            // Verificar si se ha señalizado parada
+            {
+                let stop_signals = self.stop_signals.lock().await;
+                if stop_signals.get(&channel.id).copied().unwrap_or(false) {
+                    tracing::info!("Channel {} stop signal detected, exiting retry loop", channel.name);
+                    break;
+                }
+            }
+
             retry_count += 1;
             
             tracing::info!(
@@ -139,6 +156,15 @@ impl ProcessManager {
                         signal_info,
                         retry_count
                     );
+
+                    // Verificar si se ha señalizado parada
+                    {
+                        let stop_signals = self.stop_signals.lock().await;
+                        if stop_signals.get(&channel.id).copied().unwrap_or(false) {
+                            tracing::info!("Channel {} was stopped manually, not reconnecting", channel.name);
+                            break;
+                        }
+                    }
 
                     // Verificar si el canal debe seguir corriendo
                     if let Some(current_channel) = self.storage.get_channel(channel.id).await {
@@ -351,7 +377,13 @@ impl ProcessManager {
     }
 
     pub async fn stop_channel(&self, channel_id: Uuid) -> Result<()> {
-        // Actualizar estado primero para prevenir reconexión
+        // Marcar señal de parada inmediatamente
+        {
+            let mut stop_signals = self.stop_signals.lock().await;
+            stop_signals.insert(channel_id, true);
+        }
+
+        // Actualizar estado a Stopped para prevenir reconexión
         self.storage
             .update_channel(channel_id, |c| {
                 c.status = ChannelStatus::Stopped;
@@ -400,6 +432,7 @@ impl Clone for ProcessManager {
         Self {
             processes: Arc::clone(&self.processes),
             storage: Arc::clone(&self.storage),
+            stop_signals: Arc::clone(&self.stop_signals),
         }
     }
 }

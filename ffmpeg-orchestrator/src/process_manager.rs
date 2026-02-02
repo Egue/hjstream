@@ -91,7 +91,7 @@ impl ProcessManager {
             );
 
             match self.spawn_ffmpeg(&channel).await {
-                Ok(mut child) => {
+                Ok(child) => {
                     let pid = child.id();
                     
                     // Guardar el proceso
@@ -117,14 +117,16 @@ impl ProcessManager {
 
                     let exit_status = child.wait().await?;
                     
+                    #[cfg(unix)]
+                    let signal_info = exit_status.signal().map(|s| format!(", Signal: {:?}", s)).unwrap_or_default();
+                    #[cfg(not(unix))]
+                    let signal_info = String::new();
+                    
                     let exit_msg = format!(
                         "[{}] FFmpeg process terminated - Exit code: {:?}{}",
                         chrono::Utc::now(),
                         exit_status.code(),
-                        #[cfg(unix)]
-                        format!(", Signal: {:?}", exit_status.signal()),
-                        #[cfg(not(unix))]
-                        String::new()
+                        signal_info
                     );
                     
                     // Log del exit status
@@ -134,10 +136,7 @@ impl ProcessManager {
                         "FFmpeg stopped for channel {} - Exit code: {:?}{}, Retry count: {}",
                         channel.name,
                         exit_status.code(),
-                        #[cfg(unix)]
-                        format!(", Signal: {:?}", exit_status.signal()),
-                        #[cfg(not(unix))]
-                        String::new(),
+                        signal_info,
                         retry_count
                     );
 
@@ -244,25 +243,46 @@ impl ProcessManager {
             output_url
         );
 
-        let mut child = Command::new("ffmpeg")
-            .arg("-loglevel")
-            .arg("info")
-            .arg("-stats")
-            .arg("-i")
-            .arg(&input_url)
-            .arg("-c")
-            .arg("copy")
-            .arg("-f")
-            .arg("mpegts")
-            .arg(&output_url)
-            .stdin(Stdio::null())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            // kill_on_drop solo en Unix
-            #[cfg(unix)]
-            .kill_on_drop(true)
-            .spawn()
-            .context("Failed to spawn FFmpeg process")?;
+        #[cfg(unix)]
+        let mut child = {
+            Command::new("ffmpeg")
+                .arg("-loglevel")
+                .arg("info")
+                .arg("-stats")
+                .arg("-i")
+                .arg(&input_url)
+                .arg("-c")
+                .arg("copy")
+                .arg("-f")
+                .arg("mpegts")
+                .arg(&output_url)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .kill_on_drop(true)
+                .spawn()
+                .context("Failed to spawn FFmpeg process")?
+        };
+        
+        #[cfg(not(unix))]
+        let mut child = {
+            Command::new("ffmpeg")
+                .arg("-loglevel")
+                .arg("info")
+                .arg("-stats")
+                .arg("-i")
+                .arg(&input_url)
+                .arg("-c")
+                .arg("copy")
+                .arg("-f")
+                .arg("mpegts")
+                .arg(&output_url)
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .context("Failed to spawn FFmpeg process")?
+        };
 
         tracing::info!(
             "Spawned FFmpeg for channel {} (PID: {:?})",

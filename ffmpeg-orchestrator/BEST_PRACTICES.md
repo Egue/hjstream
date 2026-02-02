@@ -1,4 +1,4 @@
-# FFmpeg Orchestrator - Guía de Mejores Prácticas
+# hjstream - Guía de Mejores Prácticas
 
 ## Configuración de Red
 
@@ -68,10 +68,10 @@ ffmpeg -i input -buffer_size 10M -c copy output
 ### Ver logs en tiempo real
 ```bash
 # Logs del servicio
-sudo journalctl -u ffmpeg-orchestrator -f
+sudo journalctl -u hjstream -f
 
 # Logs de un canal específico
-tail -f /var/log/hjsolutions/nombre-canal.log
+tail -f /var/log/hjstream/nombre-canal.log
 ```
 
 ### Estadísticas de red
@@ -95,7 +95,7 @@ ps aux | grep ffmpeg
 top -p $(pgrep -d',' ffmpeg)
 
 # Recursos del orquestador
-systemctl status ffmpeg-orchestrator
+systemctl status hjstream
 ```
 
 ## Optimización de Performance
@@ -140,7 +140,7 @@ sudo sysctl -p
 **Soluciones**:
 1. Verificar logs del canal:
    ```bash
-   cat /var/log/hjsolutions/nombre-canal.log
+   cat /var/log/hjstream/nombre-canal.log
    ```
 
 2. Probar FFmpeg manualmente:
@@ -198,10 +198,10 @@ sudo sysctl -p
 **Soluciones**:
 ```bash
 # Corregir permisos
-sudo chown -R root:root /var/log/hjsolutions
-sudo chown -R root:root /etc/hjsolutions
-sudo chmod 755 /var/log/hjsolutions
-sudo chmod 755 /etc/hjsolutions
+sudo chown -R root:root /var/log/hjstream
+sudo chown -R root:root /etc/hjstream
+sudo chmod 755 /var/log/hjstream
+sudo chmod 755 /etc/hjstream
 ```
 
 ## Estrategias de Alta Disponibilidad
@@ -209,14 +209,14 @@ sudo chmod 755 /etc/hjsolutions
 ### Múltiples instancias
 Para alta disponibilidad, ejecutar múltiples instancias:
 
-1. **Servidor primario**: Puerto 3000
+1. **Servidor primario**: Puerto 31337
 2. **Servidor secundario**: Puerto 3001
 
 Usar un load balancer (nginx/HAProxy) para distribuir:
 
 ```nginx
 upstream orchestrator {
-    server 127.0.0.1:3000;
+    server 127.0.0.1:31337;
     server 127.0.0.1:3001 backup;
 }
 ```
@@ -228,7 +228,7 @@ Hacer backup regular de la configuración:
 #!/bin/bash
 # backup-channels.sh
 DATE=$(date +%Y%m%d_%H%M%S)
-cp /etc/hjsolutions/channels.json /backup/channels_$DATE.json
+cp /etc/hjstream/channels.json /backup/channels_$DATE.json
 ```
 
 Agregar a cron:
@@ -242,9 +242,9 @@ Crear script de monitoreo:
 ```bash
 #!/bin/bash
 # watchdog.sh
-if ! systemctl is-active --quiet ffmpeg-orchestrator; then
+if ! systemctl is-active --quiet hjstream; then
     echo "Service down, restarting..."
-    systemctl start ffmpeg-orchestrator
+    systemctl start hjstream
     # Enviar alerta (email, Slack, etc.)
 fi
 ```
@@ -272,10 +272,10 @@ Crear un frontend con:
 ## Mantenimiento
 
 ### Rotación de logs
-Crear `/etc/logrotate.d/hjsolutions`:
+Crear `/etc/logrotate.d/hjstream`:
 
 ```
-/var/log/hjsolutions/*.log {
+/var/log/hjstream/*.log {
     daily
     rotate 7
     compress
@@ -289,25 +289,25 @@ Crear `/etc/logrotate.d/hjsolutions`:
 ### Actualización del orquestador
 ```bash
 # 1. Detener el servicio
-sudo systemctl stop ffmpeg-orchestrator
+sudo systemctl stop hjstream
 
 # 2. Hacer backup
-sudo cp /usr/local/bin/ffmpeg-orchestrator /usr/local/bin/ffmpeg-orchestrator.bak
-sudo cp /etc/hjsolutions/channels.json /etc/hjsolutions/channels.json.bak
+sudo cp /usr/local/bin/hjstream /usr/local/bin/hjstream.bak
+sudo cp /etc/hjstream/channels.json /etc/hjstream/channels.json.bak
 
 # 3. Compilar nueva versión
-cd /path/to/ffmpeg-orchestrator
+cd /path/to/hjstream
 git pull
 cargo build --release
 
 # 4. Instalar
-sudo cp target/release/ffmpeg-orchestrator /usr/local/bin/
+sudo cp target/release/hjstream /usr/local/bin/
 
 # 5. Reiniciar
-sudo systemctl start ffmpeg-orchestrator
+sudo systemctl start hjstream
 
 # 6. Verificar
-sudo systemctl status ffmpeg-orchestrator
+sudo systemctl status hjstream
 ```
 
 ## Seguridad
@@ -322,7 +322,7 @@ openssl rand -hex 32
 
 2. Configurar en headers:
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:3000/api/channels
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:31337/api/channels
 ```
 
 ### HTTPS
@@ -337,7 +337,7 @@ server {
     ssl_certificate_key /etc/ssl/private/key.pem;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:31337;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -353,7 +353,7 @@ location /api {
     allow 10.0.0.0/8;
     deny all;
     
-    proxy_pass http://localhost:3000;
+    proxy_pass http://localhost:31337;
 }
 ```
 

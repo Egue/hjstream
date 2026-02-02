@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# FFmpeg Orchestrator - API Test Scripts
+# hjstream - API Test Scripts
 # Ejemplos de uso de la API REST
 
-API_URL="http://localhost:3000"
+API_URL="http://localhost:31337"
 
 echo "========================================="
-echo "FFmpeg Orchestrator - API Examples"
+echo "hjstream - API Examples"
 echo "========================================="
 echo ""
 
@@ -28,7 +28,7 @@ CHANNEL_SRT=$(curl -s -X POST $API_URL/api/channels \
     "description": "Canal 10 CHV - SRT to UDP",
     "input": {
       "format": "srt",
-      "url": "131.221.42.62:8890",
+      "url": "192.x.x.x:111",
       "mode": "caller",
       "latency": 200000
     },

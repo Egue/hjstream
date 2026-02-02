@@ -80,7 +80,7 @@ impl ProcessManager {
             tracing::info!("Starting FFmpeg for channel: {}", channel.name);
 
             match self.spawn_ffmpeg(&channel).await {
-                Ok(mut child) => {
+                Ok(child) => {
                     let pid = child.id();
                     
                     // Guardar el proceso
@@ -225,10 +225,10 @@ impl ProcessManager {
         Ok(())
     }
 
-    pub async fn is_running(&self, channel_id: Uuid) -> bool {
+    /*pub async fn is_running(&self, channel_id: Uuid) -> bool {
         let processes = self.processes.read().await;
         processes.contains_key(&channel_id)
-    }
+    }*/
 
     async fn log_to_file(&self, path: &str, message: &str) -> Result<()> {
         let mut file = tokio::fs::OpenOptions::new()

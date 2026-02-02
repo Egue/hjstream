@@ -6,7 +6,7 @@ use tokio::sync::RwLock;
 use std::sync::Arc;
 use uuid::Uuid;
 
-const CHANNELS_FILE: &str = "/etc/hjsolutions/channels.json";
+const CHANNELS_FILE: &str = "/etc/hjstream/channels.json";
 
 pub struct Storage {
     channels: Arc<RwLock<Vec<Channel>>>,

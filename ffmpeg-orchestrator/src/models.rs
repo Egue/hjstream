@@ -117,7 +117,7 @@ impl Channel {
     }
 
     pub fn get_log_file(&self) -> String {
-        format!("/var/log/hjsolutions/{}.log", self.name)
+        format!("/var/log/hjstream/{}.log", self.name)
     }
 
     pub fn get_input_url(&self) -> String {

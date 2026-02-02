@@ -1,13 +1,13 @@
 {
   "info": {
-    "name": "FFmpeg Orchestrator API",
+    "name": "hjstream API",
     "description": "Colección de endpoints para gestionar canales FFmpeg",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:31337",
       "type": "string"
     },
     {
@@ -80,7 +80,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"10chv\",\n  \"description\": \"Canal 10 CHV - SRT to UDP\",\n  \"input\": {\n    \"format\": \"srt\",\n    \"url\": \"131.221.42.62:8890\",\n    \"mode\": \"caller\",\n    \"latency\": 200000\n  },\n  \"output\": {\n    \"multicast_ip\": \"239.10.10.10\",\n    \"port\": 1010,\n    \"local_addr\": \"192.168.2.140\",\n    \"pkt_size\": 1316,\n    \"ttl\": 64\n  }\n}"
+          "raw": "{\n  \"name\": \"10chv\",\n  \"description\": \"Canal 10 CHV - SRT to UDP\",\n  \"input\": {\n    \"format\": \"srt\",\n    \"url\": \"192.x.x.x:111\",\n    \"mode\": \"caller\",\n    \"latency\": 200000\n  },\n  \"output\": {\n    \"multicast_ip\": \"239.10.10.10\",\n    \"port\": 1010,\n    \"local_addr\": \"192.168.2.140\",\n    \"pkt_size\": 1316,\n    \"ttl\": 64\n  }\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/channels",

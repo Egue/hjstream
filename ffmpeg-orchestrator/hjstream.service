@@ -1,14 +1,14 @@
 [Unit]
-Description=FFmpeg Orchestrator Service
+Description=hjstream Service
 After=network-online.target
 Wants=network-online.target
-Documentation=https://github.com/hjsolutions/ffmpeg-orchestrator
+Documentation=https://github.com/Egue/hjstream
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/ffmpeg-orchestrator
-ExecStart=/usr/local/bin/ffmpeg-orchestrator
+WorkingDirectory=/opt/hjstream
+ExecStart=/usr/local/bin/hjstream
 
 # Reinicio automático
 Restart=always
@@ -28,7 +28,7 @@ NoNewPrivileges=false
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=ffmpeg-orchestrator
+SyslogIdentifier=hjstream
 
 [Install]
 WantedBy=multi-user.target

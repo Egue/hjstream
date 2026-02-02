@@ -1,4 +1,4 @@
-# FFmpeg Orchestrator
+# hjstream
 
 Sistema de orquestación para gestionar canales FFmpeg a través de una API REST, con soporte para múltiples formatos de entrada (SRT, RTMP, HLS, etc.) y salida UDP multicast.
 
@@ -31,16 +31,16 @@ sudo apt install ffmpeg -y
 ### 2. Compilar el proyecto
 
 ```bash
-cd ffmpeg-orchestrator
+cd hjstream
 cargo build --release
 ```
 
 ### 3. Crear directorios necesarios
 
 ```bash
-sudo mkdir -p /etc/hjsolutions
-sudo mkdir -p /var/log/hjsolutions
-sudo chown -R $USER:$USER /var/log/hjsolutions
+sudo mkdir -p /etc/hjstream
+sudo mkdir -p /var/log/hjstream
+sudo chown -R $USER:$USER /var/log/hjstream
 ```
 
 ### 4. Ejecutar el orquestador
@@ -52,8 +52,8 @@ cargo run --release
 O copiar el binario:
 
 ```bash
-sudo cp target/release/ffmpeg-orchestrator /usr/local/bin/
-ffmpeg-orchestrator
+sudo cp target/release/hjstream /usr/local/bin/
+hjstream
 ```
 
 ## API REST
@@ -96,7 +96,7 @@ Content-Type: application/json
   "description": "Canal 10 CHV",
   "input": {
     "format": "srt",
-    "url": "131.221.42.62:8890",
+    "url": "192.x.x.x:111",
     "mode": "caller",
     "latency": 200000
   },
@@ -152,13 +152,13 @@ DELETE /api/channels/{id}
 
 ### Crear canal SRT a UDP
 ```bash
-curl -X POST http://localhost:3000/api/channels \
+curl -X POST http://localhost:31337/api/channels \
   -H "Content-Type: application/json" \
   -d '{
     "name": "canal-srt-1",
     "input": {
       "format": "srt",
-      "url": "131.221.42.62:8890",
+      "url": "192.x.x.x:111",
       "mode": "caller",
       "latency": 200000
     },
@@ -172,7 +172,7 @@ curl -X POST http://localhost:3000/api/channels \
 
 ### Crear canal RTMP a UDP
 ```bash
-curl -X POST http://localhost:3000/api/channels \
+curl -X POST http://localhost:31337/api/channels \
   -H "Content-Type: application/json" \
   -d '{
     "name": "canal-rtmp-1",
@@ -190,7 +190,7 @@ curl -X POST http://localhost:3000/api/channels \
 
 ### Crear canal HLS a UDP
 ```bash
-curl -X POST http://localhost:3000/api/channels \
+curl -X POST http://localhost:31337/api/channels \
   -H "Content-Type: application/json" \
   -d '{
     "name": "canal-hls-1",
@@ -209,38 +209,38 @@ curl -X POST http://localhost:3000/api/channels \
 ### Iniciar un canal
 ```bash
 # Obtener el ID del canal
-CHANNEL_ID=$(curl -s http://localhost:3000/api/channels | jq -r '.channels[0].id')
+CHANNEL_ID=$(curl -s http://localhost:31337/api/channels | jq -r '.channels[0].id')
 
 # Iniciar el canal
-curl -X PUT http://localhost:3000/api/channels/$CHANNEL_ID/start
+curl -X PUT http://localhost:31337/api/channels/$CHANNEL_ID/start
 ```
 
 ### Listar todos los canales
 ```bash
-curl http://localhost:3000/api/channels | jq
+curl http://localhost:31337/api/channels | jq
 ```
 
 ### Detener un canal
 ```bash
-curl -X PUT http://localhost:3000/api/channels/$CHANNEL_ID/stop
+curl -X PUT http://localhost:31337/api/channels/$CHANNEL_ID/stop
 ```
 
 ## Configuración del sistema
 
 ### Crear servicio systemd
 
-Crear el archivo `/etc/systemd/system/ffmpeg-orchestrator.service`:
+Crear el archivo `/etc/systemd/system/hjstream.service`:
 
 ```ini
 [Unit]
-Description=FFmpeg Orchestrator Service
+Description=hjstream Service
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=root
-ExecStart=/usr/local/bin/ffmpeg-orchestrator
+ExecStart=/usr/local/bin/hjstream
 Restart=always
 RestartSec=5
 LimitNOFILE=1048576
@@ -253,18 +253,18 @@ Habilitar e iniciar el servicio:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable ffmpeg-orchestrator
-sudo systemctl start ffmpeg-orchestrator
-sudo systemctl status ffmpeg-orchestrator
+sudo systemctl enable hjstream
+sudo systemctl start hjstream
+sudo systemctl status hjstream
 ```
 
 ## Estructura de archivos
 
 ```
-/etc/hjsolutions/
+/etc/hjstream/
   └── channels.json          # Configuración persistente de canales
 
-/var/log/hjsolutions/
+/var/log/hjstream/
   ├── canal-1.log           # Logs del canal 1
   ├── canal-2.log           # Logs del canal 2
   └── ...
@@ -289,7 +289,7 @@ El orquestador implementa auto-reconexión automática:
 
 ## Logs
 
-Cada canal tiene su propio archivo de log en `/var/log/hjsolutions/{nombre-canal}.log`.
+Cada canal tiene su propio archivo de log en `/var/log/hjstream/{nombre-canal}.log`.
 
 Los logs incluyen:
 - Inicio y detención del proceso FFmpeg
@@ -302,8 +302,8 @@ Los logs incluyen:
 # Nivel de logging (trace, debug, info, warn, error)
 RUST_LOG=debug
 
-# Puerto del servidor (default: 3000)
-PORT=3000
+# Puerto del servidor (default: 31337)
+PORT=31337
 ```
 
 ## Desarrollo
@@ -327,19 +327,19 @@ cargo build --release
 
 ### El canal no se inicia
 1. Verificar que FFmpeg esté instalado: `ffmpeg -version`
-2. Verificar los logs: `cat /var/log/hjsolutions/{nombre-canal}.log`
+2. Verificar los logs: `cat /var/log/hjstream/{nombre-canal}.log`
 3. Verificar que la URL de entrada sea accesible
 
 ### Error de permisos
 ```bash
-sudo chown -R $USER:$USER /var/log/hjsolutions
-sudo chown -R $USER:$USER /etc/hjsolutions
+sudo chown -R $USER:$USER /var/log/hjstream
+sudo chown -R $USER:$USER /etc/hjstream
 ```
 
 ### El servidor no guarda la configuración
-Verificar permisos en `/etc/hjsolutions`:
+Verificar permisos en `/etc/hjstream`:
 ```bash
-ls -la /etc/hjsolutions/
+ls -la /etc/hjstream/
 ```
 
 ## Licencia
@@ -348,4 +348,4 @@ MIT
 
 ## Autor
 
-HjSolutions
+hjstream

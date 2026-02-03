@@ -1,0 +1,32 @@
+# Archivo de configuración para Stream Relay
+# Formato: INPUT_URL OUTPUT_IP OUTPUT_PORT
+#
+# Protocolos soportados:
+# - SRT: srt://server:port
+# - RTMP: rtmp://server/app/stream
+# - HLS: http://server/stream.m3u8
+# - DASH: http://server/manifest.mpd
+# - UDP: udp://@:port o udp://server:port
+# - HTTP/HTTPS: http://server/stream
+#
+# Las IPs de salida deben ser multicast (239.x.x.x) o unicast según tu configuración
+
+# Ejemplos de configuración:
+
+# Stream SRT a UDP multicast
+srt://source-server.com:9000 239.1.1.1 5000
+
+# Stream RTMP a UDP multicast
+rtmp://live-server.com/live/channel1 239.1.1.2 5001
+
+# Stream HLS a UDP multicast
+http://streaming-server.com/live/stream1/playlist.m3u8 239.1.1.3 5002
+
+# Stream DASH a UDP multicast
+http://dash-server.com/content/sintel/manifest.mpd 239.1.1.4 5003
+
+# Relay UDP a UDP multicast (cambiar IP/puerto)
+udp://@:1234 239.1.1.5 5004
+
+# Stream HTTP directo
+http://live-server.com/stream.ts 239.1.1.6 5005

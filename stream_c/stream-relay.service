@@ -1,0 +1,52 @@
+[Unit]
+Description=Multi-Stream Relay for CATV-2 Modulators
+Documentation=https://github.com/yourrepo/stream-relay
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=streaming
+Group=streaming
+
+# Directorio de trabajo
+WorkingDirectory=/opt/stream-relay
+
+# Comando de ejecución
+ExecStart=/opt/stream-relay/stream_relay_ts /opt/stream-relay/config.txt
+
+# Reinicio automático
+Restart=always
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stream-relay
+
+# Límites de recursos
+LimitNOFILE=65536
+LimitNPROC=4096
+LimitMEMLOCK=infinity
+
+# Seguridad
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/stream-relay
+
+# Red
+RestrictAddressFamilies=AF_INET AF_INET6
+
+# Optimización de rendimiento
+Nice=-10
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=50
+
+[Install]
+WantedBy=multi-user.target

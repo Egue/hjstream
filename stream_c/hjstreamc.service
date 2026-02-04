@@ -1,6 +1,6 @@
 [Unit]
-Description=Multi-Stream Relay for CATV-2 Modulators
-Documentation=https://github.com/yourrepo/stream-relay
+Description=Multi-hjstreamc for CATV-2 Modulators
+Documentation=https://github.com/Egue/hjstream
 After=network-online.target
 Wants=network-online.target
 
@@ -10,10 +10,10 @@ User=streaming
 Group=streaming
 
 # Directorio de trabajo
-WorkingDirectory=/opt/stream-relay
+WorkingDirectory=/opt/hjstreamc
 
 # Comando de ejecución
-ExecStart=/opt/stream-relay/stream_relay_ts /opt/stream-relay/config.txt
+ExecStart=/opt/hjstreamc/stream_relay_ts /opt/hjstreamc/config.txt
 
 # Reinicio automático
 Restart=always
@@ -24,7 +24,7 @@ StartLimitIntervalSec=60
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=stream-relay
+SyslogIdentifier=hjstreamc
 
 # Límites de recursos
 LimitNOFILE=65536
@@ -36,7 +36,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/stream-relay
+ReadWritePaths=/opt/hjstreamc
 
 # Red
 RestrictAddressFamilies=AF_INET AF_INET6

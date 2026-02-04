@@ -1,4 +1,4 @@
-# Archivo de configuración para Stream Relay
+# Archivo de configuración para hjstreamc
 # Formato: INPUT_URL OUTPUT_IP OUTPUT_PORT
 #
 # Protocolos soportados:

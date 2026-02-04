@@ -294,7 +294,7 @@ int main(int argc, char* argv[]) {
     pthread_t stats_tid;
     
     printf("===========================================\n");
-    printf("  Multi-Stream Relay para CATV-2\n");
+    printf("  Multi-hjstreamc para CATV-2\n");
     printf("  Optimizado para bajo consumo de CPU\n");
     printf("===========================================\n\n");
     

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script de instalación para Stream Relay CATV-2
+# Script de instalación para hjstreamc CATV-2
 
 set -e
 
@@ -9,13 +9,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-INSTALL_DIR="/opt/stream-relay"
-SERVICE_NAME="stream-relay"
+INSTALL_DIR="/opt/hjstreamc"
+SERVICE_NAME="hjstreamc"
 USER="streaming"
 
 echo -e "${BLUE}"
 echo "=========================================="
-echo "  Instalador Stream Relay CATV-2"
+echo "  Instalador hjstreamc CATV-2"
 echo "=========================================="
 echo -e "${NC}"
 
@@ -111,7 +111,7 @@ copy_files() {
     if [ ! -f "$INSTALL_DIR/config.txt" ]; then
         cp config.txt $INSTALL_DIR/config.txt.example
         cat > $INSTALL_DIR/config.txt << 'EOF'
-# Configuración de Stream Relay
+# Configuración de hjstreamc
 # Formato: INPUT_URL OUTPUT_IP OUTPUT_PORT
 #
 # Ejemplo:
@@ -137,7 +137,7 @@ EOF
 install_service() {
     echo -e "${YELLOW}Instalando servicio systemd...${NC}"
     
-    cp stream-relay.service /etc/systemd/system/$SERVICE_NAME.service
+    cp hjstreamc.service /etc/systemd/system/$SERVICE_NAME.service
     systemctl daemon-reload
     
     echo -e "${GREEN}✓ Servicio instalado${NC}"
@@ -148,7 +148,7 @@ configure_system() {
     echo -e "${YELLOW}Configurando sistema...${NC}"
     
     # Aumentar límites
-    cat > /etc/security/limits.d/stream-relay.conf << EOF
+    cat > /etc/security/limits.d/hjstreamc.conf << EOF
 $USER soft nofile 65536
 $USER hard nofile 65536
 $USER soft nproc 4096
@@ -159,7 +159,7 @@ EOF
     if ! grep -q "net.core.rmem_max" /etc/sysctl.conf; then
         cat >> /etc/sysctl.conf << EOF
 
-# Optimizaciones para Stream Relay
+# Optimizaciones para hjstreamc
 net.core.rmem_max = 134217728
 net.core.wmem_max = 134217728
 net.core.rmem_default = 16777216
@@ -267,7 +267,7 @@ main() {
 }
 
 # Mostrar menú
-echo "Este script instalará Stream Relay en: $INSTALL_DIR"
+echo "Este script instalará hjstreamc en: $INSTALL_DIR"
 echo ""
 read -p "¿Continuar? (s/n): " confirm
 

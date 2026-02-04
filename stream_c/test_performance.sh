@@ -2,7 +2,7 @@
 # Script de testing y comparación de rendimiento
 
 echo "=========================================="
-echo "  Test de Rendimiento Stream Relay"
+echo "  Test de Rendimiento hjstreamc"
 echo "=========================================="
 echo ""
 

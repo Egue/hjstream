@@ -1,4 +1,4 @@
-# Multi-Stream Relay para Moduladores CATV-2
+# Multi-hjstreamc para Moduladores CATV-2
 
 Sistema optimizado para recibir múltiples señales (SRT, RTMP, HLS, DASH, UDP) y retransmitirlas vía UDP para moduladores CATV-2, diseñado para **bajo consumo de CPU** comparado con FFmpeg cuando se manejan más de 50 señales simultáneas.
 
@@ -119,18 +119,18 @@ udp://@239.1.1.1:5000          # Multicast input
 
 ### Como servicio systemd
 
-Crear `/etc/systemd/system/stream-relay.service`:
+Crear `/etc/systemd/system/hjstreamc.service`:
 
 ```ini
 [Unit]
-Description=Multi-Stream Relay for CATV-2
+Description=Multi-hjstreamc for CATV-2
 After=network.target
 
 [Service]
 Type=simple
 User=streaming
-WorkingDirectory=/opt/stream-relay
-ExecStart=/opt/stream-relay/stream_relay_ts /opt/stream-relay/config.txt
+WorkingDirectory=/opt/hjstreamc
+ExecStart=/opt/hjstreamc/stream_relay_ts /opt/hjstreamc/config.txt
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -147,14 +147,14 @@ WantedBy=multi-user.target
 Activar:
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable stream-relay
-sudo systemctl start stream-relay
-sudo systemctl status stream-relay
+sudo systemctl enable hjstreamc
+sudo systemctl start hjstreamc
+sudo systemctl status hjstreamc
 ```
 
 Ver logs:
 ```bash
-sudo journalctl -u stream-relay -f
+sudo journalctl -u hjstreamc -f
 ```
 
 ## 📊 Monitoreo
@@ -286,7 +286,7 @@ Para entornos de producción:
 1. **Usuario dedicado sin privilegios**
 ```bash
 sudo useradd -r -s /bin/false streaming
-sudo chown streaming:streaming /opt/stream-relay
+sudo chown streaming:streaming /opt/hjstreamc
 ```
 
 2. **Firewall**

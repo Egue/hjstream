@@ -371,7 +371,7 @@ int main(int argc, char* argv[]) {
     pthread_t stats_tid;
     
     printf("===========================================\n");
-    printf("  Multi-Stream Relay MPEGTS para CATV-2\n");
+    printf("  Multi-hjstreamc MPEGTS para CATV-2\n");
     printf("  Optimizado - Bajo CPU - Auto-reconexión\n");
     printf("===========================================\n\n");
     

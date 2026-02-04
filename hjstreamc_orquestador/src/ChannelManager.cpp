@@ -39,7 +39,7 @@ void ChannelManager::parseConfigLine(const std::string& line) {
     trim(ip);
     trim(port_str);
 
-    GstPipeline::Config cfg;
+    StreamPipeline::Config cfg;
     cfg.name = name;
     cfg.rtsp_url = "rtsp://127.0.0.1:8554" + path;
     cfg.multicast_ip = ip;
@@ -51,7 +51,7 @@ void ChannelManager::parseConfigLine(const std::string& line) {
         return;
     }
 
-    pipelines_.push_back(std::make_unique<GstPipeline>(cfg));
+    pipelines_.push_back(std::make_unique<StreamPipeline>(cfg));
 }
 
 bool ChannelManager::loadChannels() {

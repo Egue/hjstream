@@ -1,92 +1,93 @@
 # Configuración de 70 canales para Multicast Streamer
-# Formato: nombre,ruta_rtsp,ip_multicast,puerto
+# Formato: nombre,ruta_rtsp,ip_multicast,puerto,interfaz
 #
 # Este es un ejemplo completo con 70 canales distribuidos en diferentes
 # rangos de IP multicast para facilitar la organización
+# Todos usan la interfaz eno1 (puedes cambiarla según tu configuración)
 
 # Canales 1-10 (Noticias)
-Canal_News_1,/news1,239.1.1.1,5000
-Canal_News_2,/news2,239.1.1.2,5000
-Canal_News_3,/news3,239.1.1.3,5000
-Canal_News_4,/news4,239.1.1.4,5000
-Canal_News_5,/news5,239.1.1.5,5000
-Canal_News_6,/news6,239.1.1.6,5000
-Canal_News_7,/news7,239.1.1.7,5000
-Canal_News_8,/news8,239.1.1.8,5000
-Canal_News_9,/news9,239.1.1.9,5000
-Canal_News_10,/news10,239.1.1.10,5000
+Canal_News_1,/news1,239.1.1.1,5000,eno1
+Canal_News_2,/news2,239.1.1.2,5000,eno1
+Canal_News_3,/news3,239.1.1.3,5000,eno1
+Canal_News_4,/news4,239.1.1.4,5000,eno1
+Canal_News_5,/news5,239.1.1.5,5000,eno1
+Canal_News_6,/news6,239.1.1.6,5000,eno1
+Canal_News_7,/news7,239.1.1.7,5000,eno1
+Canal_News_8,/news8,239.1.1.8,5000,eno1
+Canal_News_9,/news9,239.1.1.9,5000,eno1
+Canal_News_10,/news10,239.1.1.10,5000,eno1
 
 # Canales 11-20 (Deportes)
-Canal_Sports_1,/sports1,239.1.2.1,5000
-Canal_Sports_2,/sports2,239.1.2.2,5000
-Canal_Sports_3,/sports3,239.1.2.3,5000
-Canal_Sports_4,/sports4,239.1.2.4,5000
-Canal_Sports_5,/sports5,239.1.2.5,5000
-Canal_Sports_6,/sports6,239.1.2.6,5000
-Canal_Sports_7,/sports7,239.1.2.7,5000
-Canal_Sports_8,/sports8,239.1.2.8,5000
-Canal_Sports_9,/sports9,239.1.2.9,5000
-Canal_Sports_10,/sports10,239.1.2.10,5000
+Canal_Sports_1,/sports1,239.1.2.1,5000,eno1
+Canal_Sports_2,/sports2,239.1.2.2,5000,eno1
+Canal_Sports_3,/sports3,239.1.2.3,5000,eno1
+Canal_Sports_4,/sports4,239.1.2.4,5000,eno1
+Canal_Sports_5,/sports5,239.1.2.5,5000,eno1
+Canal_Sports_6,/sports6,239.1.2.6,5000,eno1
+Canal_Sports_7,/sports7,239.1.2.7,5000,eno1
+Canal_Sports_8,/sports8,239.1.2.8,5000,eno1
+Canal_Sports_9,/sports9,239.1.2.9,5000,eno1
+Canal_Sports_10,/sports10,239.1.2.10,5000,eno1
 
 # Canales 21-30 (Entretenimiento)
-Canal_Entertainment_1,/ent1,239.1.3.1,5000
-Canal_Entertainment_2,/ent2,239.1.3.2,5000
-Canal_Entertainment_3,/ent3,239.1.3.3,5000
-Canal_Entertainment_4,/ent4,239.1.3.4,5000
-Canal_Entertainment_5,/ent5,239.1.3.5,5000
-Canal_Entertainment_6,/ent6,239.1.3.6,5000
-Canal_Entertainment_7,/ent7,239.1.3.7,5000
-Canal_Entertainment_8,/ent8,239.1.3.8,5000
-Canal_Entertainment_9,/ent9,239.1.3.9,5000
-Canal_Entertainment_10,/ent10,239.1.3.10,5000
+Canal_Entertainment_1,/ent1,239.1.3.1,5000,eno1
+Canal_Entertainment_2,/ent2,239.1.3.2,5000,eno1
+Canal_Entertainment_3,/ent3,239.1.3.3,5000,eno1
+Canal_Entertainment_4,/ent4,239.1.3.4,5000,eno1
+Canal_Entertainment_5,/ent5,239.1.3.5,5000,eno1
+Canal_Entertainment_6,/ent6,239.1.3.6,5000,eno1
+Canal_Entertainment_7,/ent7,239.1.3.7,5000,eno1
+Canal_Entertainment_8,/ent8,239.1.3.8,5000,eno1
+Canal_Entertainment_9,/ent9,239.1.3.9,5000,eno1
+Canal_Entertainment_10,/ent10,239.1.3.10,5000,eno1
 
 # Canales 31-40 (Películas)
-Canal_Movies_1,/movies1,239.1.4.1,5000
-Canal_Movies_2,/movies2,239.1.4.2,5000
-Canal_Movies_3,/movies3,239.1.4.3,5000
-Canal_Movies_4,/movies4,239.1.4.4,5000
-Canal_Movies_5,/movies5,239.1.4.5,5000
-Canal_Movies_6,/movies6,239.1.4.6,5000
-Canal_Movies_7,/movies7,239.1.4.7,5000
-Canal_Movies_8,/movies8,239.1.4.8,5000
-Canal_Movies_9,/movies9,239.1.4.9,5000
-Canal_Movies_10,/movies10,239.1.4.10,5000
+Canal_Movies_1,/movies1,239.1.4.1,5000,eno1
+Canal_Movies_2,/movies2,239.1.4.2,5000,eno1
+Canal_Movies_3,/movies3,239.1.4.3,5000,eno1
+Canal_Movies_4,/movies4,239.1.4.4,5000,eno1
+Canal_Movies_5,/movies5,239.1.4.5,5000,eno1
+Canal_Movies_6,/movies6,239.1.4.6,5000,eno1
+Canal_Movies_7,/movies7,239.1.4.7,5000,eno1
+Canal_Movies_8,/movies8,239.1.4.8,5000,eno1
+Canal_Movies_9,/movies9,239.1.4.9,5000,eno1
+Canal_Movies_10,/movies10,239.1.4.10,5000,eno1
 
 # Canales 41-50 (Documentales)
-Canal_Documentary_1,/doc1,239.1.5.1,5000
-Canal_Documentary_2,/doc2,239.1.5.2,5000
-Canal_Documentary_3,/doc3,239.1.5.3,5000
-Canal_Documentary_4,/doc4,239.1.5.4,5000
-Canal_Documentary_5,/doc5,239.1.5.5,5000
-Canal_Documentary_6,/doc6,239.1.5.6,5000
-Canal_Documentary_7,/doc7,239.1.5.7,5000
-Canal_Documentary_8,/doc8,239.1.5.8,5000
-Canal_Documentary_9,/doc9,239.1.5.9,5000
-Canal_Documentary_10,/doc10,239.1.5.10,5000
+Canal_Documentary_1,/doc1,239.1.5.1,5000,eno1
+Canal_Documentary_2,/doc2,239.1.5.2,5000,eno1
+Canal_Documentary_3,/doc3,239.1.5.3,5000,eno1
+Canal_Documentary_4,/doc4,239.1.5.4,5000,eno1
+Canal_Documentary_5,/doc5,239.1.5.5,5000,eno1
+Canal_Documentary_6,/doc6,239.1.5.6,5000,eno1
+Canal_Documentary_7,/doc7,239.1.5.7,5000,eno1
+Canal_Documentary_8,/doc8,239.1.5.8,5000,eno1
+Canal_Documentary_9,/doc9,239.1.5.9,5000,eno1
+Canal_Documentary_10,/doc10,239.1.5.10,5000,eno1
 
 # Canales 51-60 (Infantiles)
-Canal_Kids_1,/kids1,239.1.6.1,5000
-Canal_Kids_2,/kids2,239.1.6.2,5000
-Canal_Kids_3,/kids3,239.1.6.3,5000
-Canal_Kids_4,/kids4,239.1.6.4,5000
-Canal_Kids_5,/kids5,239.1.6.5,5000
-Canal_Kids_6,/kids6,239.1.6.6,5000
-Canal_Kids_7,/kids7,239.1.6.7,5000
-Canal_Kids_8,/kids8,239.1.6.8,5000
-Canal_Kids_9,/kids9,239.1.6.9,5000
-Canal_Kids_10,/kids10,239.1.6.10,5000
+Canal_Kids_1,/kids1,239.1.6.1,5000,eno1
+Canal_Kids_2,/kids2,239.1.6.2,5000,eno1
+Canal_Kids_3,/kids3,239.1.6.3,5000,eno1
+Canal_Kids_4,/kids4,239.1.6.4,5000,eno1
+Canal_Kids_5,/kids5,239.1.6.5,5000,eno1
+Canal_Kids_6,/kids6,239.1.6.6,5000,eno1
+Canal_Kids_7,/kids7,239.1.6.7,5000,eno1
+Canal_Kids_8,/kids8,239.1.6.8,5000,eno1
+Canal_Kids_9,/kids9,239.1.6.9,5000,eno1
+Canal_Kids_10,/kids10,239.1.6.10,5000,eno1
 
 # Canales 61-70 (Premium/Internacionales)
-Canal_Premium_1,/premium1,239.1.7.1,5000
-Canal_Premium_2,/premium2,239.1.7.2,5000
-Canal_Premium_3,/premium3,239.1.7.3,5000
-Canal_Premium_4,/premium4,239.1.7.4,5000
-Canal_Premium_5,/premium5,239.1.7.5,5000
-Canal_International_1,/intl1,239.1.7.6,5000
-Canal_International_2,/intl2,239.1.7.7,5000
-Canal_International_3,/intl3,239.1.7.8,5000
-Canal_International_4,/intl4,239.1.7.9,5000
-Canal_International_5,/intl5,239.1.7.10,5000
+Canal_Premium_1,/premium1,239.1.7.1,5000,eno1
+Canal_Premium_2,/premium2,239.1.7.2,5000,eno1
+Canal_Premium_3,/premium3,239.1.7.3,5000,eno1
+Canal_Premium_4,/premium4,239.1.7.4,5000,eno1
+Canal_Premium_5,/premium5,239.1.7.5,5000,eno1
+Canal_International_1,/intl1,239.1.7.6,5000,eno1
+Canal_International_2,/intl2,239.1.7.7,5000,eno1
+Canal_International_3,/intl3,239.1.7.8,5000,eno1
+Canal_International_4,/intl4,239.1.7.9,5000,eno1
+Canal_International_5,/intl5,239.1.7.10,5000,eno1
 
 # Organización de IPs multicast:
 # 239.1.1.x  - Noticias
@@ -96,3 +97,10 @@ Canal_International_5,/intl5,239.1.7.10,5000
 # 239.1.5.x  - Documentales
 # 239.1.6.x  - Infantiles
 # 239.1.7.x  - Premium/Internacional
+
+# Para cambiar la interfaz globalmente:
+# sed -i 's/,eno1$/,eth0/g' canales.txt
+
+# Para balanceo de carga con múltiples interfaces:
+# Edita manualmente y asigna diferentes interfaces a grupos de canales
+# Ejemplo: primeros 35 canales en eno1, últimos 35 en eno2

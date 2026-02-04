@@ -27,7 +27,7 @@ private:
 
     std::string config_file_;
     int restart_delay_sec_;
-    std::vector<std::unique_ptr<GstPipeline>> pipelines_;
+    std::vector<std::unique_ptr<StreamPipeline>> pipelines_;
     std::atomic<bool> running_{false};
     std::thread monitor_thread_;
 };

@@ -2,13 +2,13 @@
 #include <iostream>
 #include <sstream>
 
-GstPipeline::GstPipeline(const Config& cfg) : config_(cfg) {}
+StreamPipeline::StreamPipeline(const Config& cfg) : config_(cfg) {}
 
-GstPipeline::~GstPipeline() {
+StreamPipeline::~StreamPipeline() {
     stop();
 }
 
-std::string GstPipeline::buildPipelineDescription() const {
+std::string StreamPipeline::buildPipelineDescription() const {
     std::ostringstream pipeline_desc;
     
     // Pipeline optimizado para baja latencia
@@ -29,7 +29,7 @@ std::string GstPipeline::buildPipelineDescription() const {
     return pipeline_desc.str();
 }
 
-bool GstPipeline::start() {
+bool StreamPipeline::start() {
     if (running_.load()) {
         std::cerr << "[" << config_.name << "] Pipeline ya está corriendo" << std::endl;
         return true;
@@ -68,7 +68,7 @@ bool GstPipeline::start() {
     return true;
 }
 
-void GstPipeline::stop() {
+void StreamPipeline::stop() {
     if (!pipeline_) return;
 
     running_.store(false);
@@ -85,13 +85,13 @@ void GstPipeline::stop() {
     std::cout << "[" << config_.name << "] Pipeline detenido" << std::endl;
 }
 
-GstBusSyncReply GstPipeline::busCallback(GstBus* bus, GstMessage* msg, gpointer data) {
-    auto* pipeline = static_cast<GstPipeline*>(data);
+GstBusSyncReply StreamPipeline::busCallback(GstBus* bus, GstMessage* msg, gpointer data) {
+    auto* pipeline = static_cast<StreamPipeline*>(data);
     pipeline->handleBusMessage(msg);
     return GST_BUS_PASS;
 }
 
-void GstPipeline::handleBusMessage(GstMessage* msg) {
+void StreamPipeline::handleBusMessage(GstMessage* msg) {
     switch (GST_MESSAGE_TYPE(msg)) {
         case GST_MESSAGE_ERROR: {
             GError* err;
@@ -134,7 +134,7 @@ void GstPipeline::handleBusMessage(GstMessage* msg) {
     }
 }
 
-std::string GstPipeline::getStatus() const {
+std::string StreamPipeline::getStatus() const {
     if (!pipeline_) return "STOPPED";
     
     GstState state;

@@ -4,7 +4,8 @@
 #include <memory>
 #include <atomic>
 
-class GstPipeline {
+// Renombrado a StreamPipeline para evitar conflicto con GstPipeline de GStreamer
+class StreamPipeline {
 public:
     struct Config {
         std::string name;
@@ -16,12 +17,12 @@ public:
         int buffer_size = 10;
     };
 
-    explicit GstPipeline(const Config& cfg);
-    ~GstPipeline();
+    explicit StreamPipeline(const Config& cfg);
+    ~StreamPipeline();
 
     // No permitir copia
-    GstPipeline(const GstPipeline&) = delete;
-    GstPipeline& operator=(const GstPipeline&) = delete;
+    StreamPipeline(const StreamPipeline&) = delete;
+    StreamPipeline& operator=(const StreamPipeline&) = delete;
 
     bool start();
     void stop();
@@ -35,7 +36,7 @@ private:
     std::string buildPipelineDescription() const;
 
     Config config_;
-    GstElement* pipeline_ = nullptr;
+    GstElement* pipeline_ = nullptr;  // Este es el GstPipeline de GStreamer
     GstBus* bus_ = nullptr;
     std::atomic<bool> running_{false};
 };

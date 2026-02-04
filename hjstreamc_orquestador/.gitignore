@@ -1,0 +1,35 @@
+# Build artifacts
+build/
+*.o
+*.so
+*.a
+multicast-streamer
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+*.tar.gz
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Configuración local
+config/canales.txt
+!config/canales.txt.example
+
+# Sistema
+.DS_Store
+Thumbs.db

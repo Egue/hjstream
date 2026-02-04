@@ -1,0 +1,48 @@
+[Unit]
+Description=Multicast Streamer - Broadcast-grade streaming server
+Documentation=https://github.com/yourusername/multicast-streamer
+After=network-online.target mediamtx.service
+Wants=network-online.target
+# Si MediaMTX está instalado como servicio, descomenta la siguiente línea:
+# Requires=mediamtx.service
+
+[Service]
+Type=simple
+User=streamer
+Group=streamer
+
+# Ejecutable y configuración
+ExecStart=/usr/local/bin/multicast-streamer -c /etc/multicast-streamer/canales.txt -r 5
+
+# Reinicio automático
+Restart=always
+RestartSec=10
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Outputs
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=multicast-streamer
+
+# Límites de recursos
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Prioridad de proceso (requiere CAP_SYS_NICE)
+# Descomenta para prioridad en tiempo real:
+# Nice=-10
+
+# Variables de entorno GStreamer
+Environment="GST_DEBUG=2"
+Environment="GST_PLUGIN_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0"
+
+# Seguridad
+# Descomenta para mayor seguridad en producción:
+# PrivateTmp=true
+# ProtectSystem=strict
+# ProtectHome=true
+# NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

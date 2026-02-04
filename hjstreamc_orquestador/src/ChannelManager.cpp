@@ -14,13 +14,15 @@ ChannelManager::~ChannelManager() {
 
 void ChannelManager::parseConfigLine(const std::string& line) {
     std::istringstream iss(line);
-    std::string name, path, ip, port_str;
+    std::string name, path, ip, port_str, interface;
     
     if (!std::getline(iss, name, ',') ||
         !std::getline(iss, path, ',') ||
         !std::getline(iss, ip, ',') ||
-        !std::getline(iss, port_str)) {
+        !std::getline(iss, port_str, ',') ||
+        !std::getline(iss, interface)) {
         std::cerr << "Formato inválido en línea: " << line << std::endl;
+        std::cerr << "Formato esperado: nombre,/ruta_rtsp,ip_multicast,puerto,interfaz" << std::endl;
         return;
     }
 
@@ -38,11 +40,13 @@ void ChannelManager::parseConfigLine(const std::string& line) {
     trim(path);
     trim(ip);
     trim(port_str);
+    trim(interface);
 
     StreamPipeline::Config cfg;
     cfg.name = name;
     cfg.rtsp_url = "rtsp://127.0.0.1:8554" + path;
     cfg.multicast_ip = ip;
+    cfg.interface = interface;
     
     try {
         cfg.port = std::stoi(port_str);

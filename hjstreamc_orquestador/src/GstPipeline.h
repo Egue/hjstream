@@ -12,7 +12,7 @@ public:
         std::string rtsp_url;
         std::string multicast_ip;
         int port;
-        std::string interface = "eno1";
+        std::string interface;  // Ahora se lee del archivo .txt
         int latency_ms = 100;
         int buffer_size = 10;
     };

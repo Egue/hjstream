@@ -94,9 +94,10 @@ copy_files() {
     
     # Compilar el programa
     echo "Compilando stream_relay_ts..."
-    gcc -Wall -O3 -pthread -march=native -mtune=native \
-        -o stream_relay_ts stream_relay_ts.c \
-        -lavformat -lavcodec -lavutil -lpthread -lm
+    gcc -O3 -Wall -Wextra -pthread \
+-march=native -mtune=native \
+-o stream_relay_ts stream_relay_ts.c \
+-lavformat -lavcodec -lavutil -lm
     
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error en compilación${NC}"

@@ -21,7 +21,7 @@ fi
 
 # Variables
 VERSION="v1.16.0"
-DOWNLOAD_URL="https://github.com/bluenviron/mediamtx/releases/download/${VERSION}/mediamtx_${VERSION}_linux_arm64.tar.gz"
+DOWNLOAD_URL="https://github.com/bluenviron/mediamtx/releases/download/${VERSION}/mediamtx_${VERSION}_linux_amd64.tar.gz"
 TEMP_DIR="/tmp/mediamtx_install"
 INSTALL_DIR="/usr/local/bin"
 SERVICE_FILE="/etc/systemd/system/mediamtx.service"

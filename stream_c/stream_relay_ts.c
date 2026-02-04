@@ -121,11 +121,16 @@ reconnect:
         }
     }
 
-    if (avio_open(&out->pb,
-        av_asprintf("udp://%s:%d?pkt_size=1316",
-            cfg->output_ip, cfg->output_port),
-        AVIO_FLAG_WRITE) < 0)
+    char out_url[256];
+
+    snprintf(out_url, sizeof(out_url),
+            "udp://%s:%d?pkt_size=1316",
+            cfg->output_ip, cfg->output_port);
+
+    if (avio_open(&out->pb, out_url, AVIO_FLAG_WRITE) < 0) {
+        fprintf(stderr, "[Stream %d] Error abriendo salida UDP\n", cfg->id);
         goto cleanup;
+    }
 
     if (avformat_write_header(out, NULL) < 0)
         goto cleanup;

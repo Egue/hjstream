@@ -1,8 +1,10 @@
 [Unit]
 Description=Multi-hjstreamc for CATV-2 Modulators
-Documentation=https://github.com/Egue/hjstream
-After=network-online.target
-Wants=network-online.target
+After=network.target
+
+# Límites de reinicio
+StartLimitBurst=5
+StartLimitIntervalSec=60
 
 [Service]
 Type=simple
@@ -18,8 +20,6 @@ ExecStart=/opt/hjstreamc/stream_relay_ts /opt/hjstreamc/config.txt
 # Reinicio automático
 Restart=always
 RestartSec=5
-StartLimitBurst=5
-StartLimitIntervalSec=60
 
 # Logging
 StandardOutput=journal

@@ -17,9 +17,15 @@ WorkingDirectory=/opt/hjstreamc
 # Comando de ejecución
 ExecStart=/opt/hjstreamc/stream_relay_ts /opt/hjstreamc/config.txt
 
-# Reinicio automático
-Restart=always
+# Reinicio en fallo para evitar bucles de reinicio infinito
+Restart=on-failure
 RestartSec=5
+TimeoutStartSec=30
+
+# Verificar que exista y sea legible el archivo de configuración antes de iniciar
+ExecStartPre=/usr/bin/test -f /opt/hjstreamc/config.txt
+ExecStartPre=/usr/bin/test -r /opt/hjstreamc/config.txt
+ExecStartPre=/usr/bin/runuser -u streaming -- /usr/bin/test -r /opt/hjstreamc/config.txt
 
 # Logging
 StandardOutput=journal

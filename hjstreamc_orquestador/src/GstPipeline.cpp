@@ -11,16 +11,22 @@ StreamPipeline::~StreamPipeline() {
 std::string StreamPipeline::buildPipelineDescription() const {
     std::ostringstream pipeline_desc;
     
-    // Pipeline optimizado para baja latencia
-    // Soporta H.264 + AAC (audio opcional)
+    // Pipeline que maneja video obligatorio + audio opcional
+    // Si el audio no existe, solo pasa video
     pipeline_desc << "rtspsrc location=" << config_.rtsp_url
                   << " latency=" << config_.latency_ms
-                  << " protocols=tcp name=src "
-                  << "src. ! application/x-rtp ! rtph264depay ! h264parse ! "
-                  << "queue max-size-buffers=" << config_.buffer_size << " ! mux. "
-                  << "src. ! application/x-rtp,media=audio ! rtpmp4adepay ! aacparse ! "
-                  << "queue max-size-buffers=" << config_.buffer_size << " ! mux. "
-                  << "mpegtsmux name=mux alignment=7 ! "
+                  << " protocols=tcp name=src ";
+    
+    // Video H.264 (obligatorio)
+    pipeline_desc << "src. ! application/x-rtp,media=video ! rtph264depay ! h264parse ! "
+                  << "queue max-size-buffers=" << config_.buffer_size << " ! mux. ";
+    
+    // Audio AAC (opcional - GStreamer lo ignora si no existe)
+    pipeline_desc << "src. ! application/x-rtp,media=audio ! rtpmp4adepay ! aacparse ! "
+                  << "queue max-size-buffers=" << config_.buffer_size << " ! mux. ";
+    
+    // Mux y salida
+    pipeline_desc << "mpegtsmux name=mux alignment=7 ! "
                   << "udpsink host=" << config_.multicast_ip
                   << " port=" << config_.port
                   << " auto-multicast=false multicast-iface=" << config_.interface
@@ -97,20 +103,46 @@ void StreamPipeline::handleBusMessage(GstMessage* msg) {
             GError* err;
             gchar* debug;
             gst_message_parse_error(msg, &err, &debug);
-            std::cerr << "[" << config_.name << "] ✗ ERROR: " << err->message << std::endl;
-            if (debug) {
-                std::cerr << "  Debug: " << debug << std::endl;
+            
+            // Filtrar errores de audio ausente (normal si stream no tiene audio)
+            std::string error_msg = err->message ? err->message : "";
+            std::string debug_info = debug ? debug : "";
+            
+            bool is_audio_missing = (
+                error_msg.find("not-linked") != std::string::npos ||
+                error_msg.find("not linked") != std::string::npos ||
+                error_msg.find("Could not link") != std::string::npos ||
+                debug_info.find("rtpmp4adepay") != std::string::npos ||
+                debug_info.find("aacparse") != std::string::npos
+            );
+            
+            if (is_audio_missing) {
+                // Solo video, no es un error
+                std::cout << "[" << config_.name << "] ℹ Stream solo video (sin audio)" << std::endl;
+            } else {
+                // Error crítico
+                std::cerr << "[" << config_.name << "] ✗ ERROR: " << error_msg << std::endl;
+                if (!debug_info.empty()) {
+                    std::cerr << "  Debug: " << debug_info << std::endl;
+                }
+                running_.store(false);
             }
+            
             g_error_free(err);
             g_free(debug);
-            running_.store(false);
             break;
         }
         case GST_MESSAGE_WARNING: {
             GError* warn;
             gchar* debug;
             gst_message_parse_warning(msg, &warn, &debug);
-            std::cerr << "[" << config_.name << "] ⚠ WARNING: " << warn->message << std::endl;
+            
+            // Silenciar warnings de not-linked (audio opcional)
+            std::string warn_msg = warn->message ? warn->message : "";
+            if (warn_msg.find("not-linked") == std::string::npos) {
+                std::cerr << "[" << config_.name << "] ⚠ WARNING: " << warn_msg << std::endl;
+            }
+            
             g_error_free(warn);
             g_free(debug);
             break;

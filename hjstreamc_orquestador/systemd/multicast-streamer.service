@@ -8,8 +8,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=streamer
-Group=streamer
+User=root
+Group=root
 
 # Ejecutable y configuración
 ExecStart=/usr/local/bin/multicast-streamer -c /etc/multicast-streamer/canales.txt -r 5

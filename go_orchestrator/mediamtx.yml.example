@@ -1,0 +1,57 @@
+# Configuración de ejemplo para MediaMTX
+# Copia este archivo como mediamtx.yml para usar con Docker
+
+# Configuración general
+logLevel: info
+logDestinations: [stdout]
+logFile: mediamtx.log
+
+# API
+api: yes
+apiAddress: :9997
+
+# RTSP
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp, udp]
+
+# RTMP
+rtmp: yes
+rtmpAddress: :1935
+
+# HLS
+hls: yes
+hlsAddress: :8888
+hlsServerKey: server.key
+hlsServerCert: server.crt
+
+# WebRTC
+webrtc: yes
+webrtcAddress: :8889
+
+# SRT
+srt: yes
+srtAddress: :8890
+
+# Paths de ejemplo
+paths:
+  # Stream de prueba
+  test:
+    source: publisher
+    
+  # Canal desde SRT
+  canal_srt:
+    source: srt://0.0.0.0:8890?streamid=publish:canal_srt
+    
+  # Canal desde RTMP
+  canal_rtmp:
+    source: publisher
+    
+  # Canal desde URL externa
+  canal_externo:
+    source: rtsp://ejemplo.com/stream
+    sourceProtocol: tcp
+    
+  # Todos los demás paths
+  all:
+    source: publisher

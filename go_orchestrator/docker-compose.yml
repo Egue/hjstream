@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # MediaMTX - Servidor RTSP
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: mediamtx
+    restart: unless-stopped
+    ports:
+      - "8554:8554"   # RTSP
+      - "1935:1935"   # RTMP
+      - "8888:8888"   # HLS
+      - "8889:8889"   # WebRTC
+      - "8890:8890/udp"  # SRT
+      - "9997:9997"   # API
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+    networks:
+      - streaming
+
+  # Orchestrator
+  orchestrator:
+    build: .
+    container_name: orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mediamtx
+    environment:
+      - TZ=America/Bogota
+    networks:
+      - streaming
+    # Para acceso a red host (necesario para UDP multicast)
+    # network_mode: host
+
+networks:
+  streaming:
+    driver: bridge

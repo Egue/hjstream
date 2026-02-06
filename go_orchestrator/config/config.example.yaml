@@ -1,0 +1,35 @@
+# Configuración de ejemplo para MediaMTX Orchestrator
+# Este archivo es opcional y sirve como referencia
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+
+# Ejemplos de canales pre-configurados
+# Estos se pueden cargar al inicio si se implementa lectura de config
+channels:
+  - id: "canal-1"
+    name: "Canal Principal"
+    source_type: "srt"
+    rtsp_url: "rtsp://localhost:8554/stream1"
+    udp_address: "239.1.1.1"
+    udp_port: 5000
+    
+  - id: "canal-2"
+    name: "Canal Secundario"
+    source_type: "rtmp"
+    rtsp_url: "rtsp://localhost:8554/stream2"
+    udp_address: "239.1.1.2"
+    udp_port: 5001
+
+# Logging
+logging:
+  level: "info"  # debug, info, warning, error
+  file: "orchestrator.log"
+
+# MediaMTX
+mediamtx:
+  rtsp_address: "localhost"
+  rtsp_port: 8554
+  api_address: "localhost"
+  api_port: 9997

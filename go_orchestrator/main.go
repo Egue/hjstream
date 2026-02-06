@@ -7,11 +7,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"mediamtx-orchestrator/internal/api"
-	"mediamtx-orchestrator/internal/orchestrator"
+	"github.com/yourusername/mediamtx-orchestrator/internal/api"
+	"github.com/yourusername/mediamtx-orchestrator/internal/orchestrator"
 )
 
-//go:embed ../../web/static ../../web/templates
+//go:embed web/static web/templates
 var webFiles embed.FS
 
 func main() {
@@ -56,8 +56,8 @@ func main() {
 		c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 	})
 
-	log.Println("Servidor iniciado en http://localhost:8080")
-	if err := r.Run(":8080"); err != nil {
+	log.Println("Servidor iniciado en http://localhost:8090")
+	if err := r.Run(":8090"); err != nil {
 		log.Fatal("Error iniciando servidor:", err)
 	}
 }

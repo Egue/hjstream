@@ -1,4 +1,4 @@
-module mediamtx-orchestrator
+module github.com/yourusername/mediamtx-orchestrator
 
 go 1.21
 

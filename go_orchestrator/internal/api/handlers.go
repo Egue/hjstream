@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"mediamtx-orchestrator/internal/orchestrator"
+	"github.com/yourusername/mediamtx-orchestrator/internal/orchestrator"
 )
 
 var orch *orchestrator.Orchestrator
